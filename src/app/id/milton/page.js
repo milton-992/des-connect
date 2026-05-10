@@ -1,4 +1,10 @@
+"use client";
+
+import { QRCodeSVG } from "qrcode.react";
+
 export default function MiltonIDPage() {
+  const profileUrl = "https://www.des-uae.com/id/milton";
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(180,20,20,0.35),transparent_35%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.2),transparent_30%),linear-gradient(180deg,#050505,#000)]" />
@@ -83,7 +89,7 @@ export default function MiltonIDPage() {
             <div className="p-6 md:p-8">
               <div className="rounded-3xl border border-white/10 bg-black/50 p-6">
                 <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-                  <div className="grid h-32 w-32 shrink-0 place-items-center rounded-3xl border border-yellow-400/30 bg-gradient-to-br from-yellow-500/20 to-red-700/20 text-5xl">
+                  <div className="grid h-32 w-32 shrink-0 place-items-center rounded-3xl border border-yellow-400/30 bg-gradient-to-br from-yellow-500/20 to-red-700/20 text-5xl font-black">
                     MM
                   </div>
 
@@ -144,18 +150,29 @@ export default function MiltonIDPage() {
               </div>
 
               <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
-                <div className="flex items-center justify-between gap-5">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-[0.2em] text-white/40">
                       QR destination
                     </p>
-                    <p className="mt-1 font-bold text-white">
-                      /id/milton
+
+                    <p className="mt-1 break-all font-bold text-white">
+                      {profileUrl}
+                    </p>
+
+                    <p className="mt-2 text-sm leading-6 text-white/50">
+                      Scan this QR code to verify the official DES ID profile.
                     </p>
                   </div>
 
-                  <div className="grid h-20 w-20 place-items-center rounded-xl bg-white text-4xl text-black">
-                    ▦
+                  <div className="rounded-xl bg-white p-3">
+                    <QRCodeSVG
+                      value={profileUrl}
+                      size={120}
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                      level="H"
+                    />
                   </div>
                 </div>
               </div>
