@@ -107,8 +107,8 @@ export default function Home() {
             />
           </div>
 
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-950/30 px-4 py-2 text-sm text-red-100">
-            ⚽ Football identity, scouting, events and opportunity
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-950/30 px-4 py-2 text-sm text-green-100">
+            ✅ Verified football identity and scouting network
           </div>
 
           <h2 className="max-w-4xl text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
