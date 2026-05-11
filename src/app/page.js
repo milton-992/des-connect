@@ -36,7 +36,7 @@ export default function Home() {
       <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(180,20,20,0.35),transparent_35%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.2),transparent_30%),linear-gradient(180deg,#050505,#000)]" />
 
       <header className="border-b border-white/10 bg-black/70 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+        <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-6 px-6 py-5">
           <a href="/" className="flex items-center gap-4">
             <div className="grid h-14 w-14 place-items-center rounded-2xl border border-yellow-400/40 bg-black p-2 shadow-[0_0_30px_rgba(234,179,8,0.18)]">
               <img
@@ -47,35 +47,39 @@ export default function Home() {
             </div>
 
             <div>
-              <p className="text-xl font-black tracking-[0.28em]">DES</p>
+              <p className="text-xl font-black tracking-[0.28em] text-white">
+                DES
+              </p>
               <p className="text-xs uppercase tracking-[0.32em] text-yellow-400">
                 Draft Elite Sport
               </p>
             </div>
           </a>
 
-          <nav className="hidden items-center gap-6 text-sm text-white/70 md:flex">
-            <a href="#portals" className="hover:text-yellow-400">
-              Portals
-            </a>
-            <a href="/clubs" className="hover:text-yellow-400">
-              Clubs
-            </a>
-            <a href="/partners" className="hover:text-yellow-400">
-              Partners
-            </a>
-            <a href="/academy" className="hover:text-yellow-400">
-              Academy
-            </a>
-            <a href="/events" className="hover:text-yellow-400">
-              Events
-            </a>
-            <a href="#contact" className="hover:text-yellow-400">
-              Contact
-            </a>
-          </nav>
+          <div className="hidden md:flex md:justify-center">
+            <nav className="flex items-center gap-8 text-base font-semibold text-white">
+              <a href="#portals" className="transition hover:text-yellow-400">
+                Portals
+              </a>
+              <a href="/clubs" className="transition hover:text-yellow-400">
+                Clubs
+              </a>
+              <a href="/partners" className="transition hover:text-yellow-400">
+                Partners
+              </a>
+              <a href="/academy" className="transition hover:text-yellow-400">
+                Academy
+              </a>
+              <a href="/events" className="transition hover:text-yellow-400">
+                Events
+              </a>
+              <a href="#contact" className="transition hover:text-yellow-400">
+                Contact
+              </a>
+            </nav>
+          </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 justify-self-end">
             <a
               href="/login"
               className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
@@ -93,23 +97,37 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:py-28">
+      <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-[0.95fr_1.05fr] lg:py-28">
         <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-950/30 px-4 py-2 text-sm text-red-100">
-            ✅ Verified football identity and scouting network
+          <div className="mb-8 flex justify-start">
+            <img
+              src="/des-logo.png"
+              alt="Draft Elite Sport logo"
+              className="h-44 w-auto object-contain md:h-56 lg:h-64"
+            />
           </div>
 
-          <h1 className="max-w-4xl text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-            Verified talent.{" "}
-            <span className="text-yellow-400">Professional profiles.</span>{" "}
-            Real football opportunities.
-          </h1>
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-950/30 px-4 py-2 text-sm text-red-100">
+            ⚽ Football identity, scouting, events and opportunity
+          </div>
+
+          <h2 className="max-w-4xl text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
+            Welcome to{" "}
+            <span className="text-yellow-400">Draft Elite Sport.</span>
+          </h2>
 
           <p className="mt-7 max-w-2xl text-lg leading-8 text-white/70">
-            DES Connect is the private football platform for players, coaches,
-            scouts, staff, clubs, partners, and events — powered by digital
-            profiles, QR identity, internal training, and professional event
-            access.
+            DES is a modern football platform built to connect players, coaches,
+            scouts, clubs, staff, partners and events through verified digital
+            profiles, professional identity, QR access and structured football
+            opportunities.
+          </p>
+
+          <p className="mt-5 max-w-2xl text-base leading-8 text-white/55">
+            Our mission is to make football opportunities more organised, more
+            transparent and more professional — from player applications and
+            scouting reports to club requests, partner visibility, showcase
+            events and verified DES ID profiles.
           </p>
 
           <div className="mt-9 flex flex-col gap-4 sm:flex-row">
@@ -160,54 +178,59 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm uppercase tracking-[0.3em] text-yellow-400">
-                    DES ID
+                    DES Connect
                   </p>
                   <h2 className="mt-2 text-3xl font-black">
-                    Verified Profile Card
+                    Football platform overview
                   </h2>
                 </div>
-                <div className="text-5xl">▦</div>
+                <div className="grid h-16 w-16 place-items-center rounded-2xl border border-yellow-400/30 bg-black p-2">
+                  <img
+                    src="/des-logo.png"
+                    alt="Draft Elite Sport logo"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
               </div>
             </div>
 
             <div className="p-6">
-              <div className="rounded-3xl border border-white/10 bg-black/50 p-5">
-                <div className="flex items-center gap-4">
-                  <div className="grid h-20 w-20 place-items-center rounded-2xl border border-yellow-400/30 bg-black p-2">
-                    <img
-                      src="/des-logo.png"
-                      alt="Draft Elite Sport logo"
-                      className="h-full w-full object-contain"
-                    />
-                  </div>
+              <div className="rounded-3xl border border-white/10 bg-black/50 p-6">
+                <div className="grid gap-4">
+                  <WelcomeFeature
+                    icon="⚽"
+                    title="For Players"
+                    text="Create structured football profiles with position, nationality, preferred foot, club status, video links and DES review."
+                  />
 
-                  <div>
-                    <h3 className="text-2xl font-black">Milton M.</h3>
-                    <p className="text-yellow-400">Founder & CEO</p>
-                    <p className="mt-1 text-sm text-white/50">
-                      Draft Elite Sport
-                    </p>
-                  </div>
+                  <WelcomeFeature
+                    icon="🏟️"
+                    title="For Clubs"
+                    text="Submit recruitment needs, request shortlists and review verified DES player and coach profiles."
+                  />
+
+                  <WelcomeFeature
+                    icon="🔎"
+                    title="For Scouts"
+                    text="Apply to join the DES scouting network, complete training and submit future player reports."
+                  />
+
+                  <WelcomeFeature
+                    icon="▦"
+                    title="DES ID"
+                    text="Every approved person can later receive a unique QR profile for events, lanyards, PVC cards and club verification."
+                  />
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-3 text-sm">
-                  <ProfileInfo label="Status" value="Verified DES Team" />
-                  <ProfileInfo label="Access" value="Super Admin" />
-                  <ProfileInfo label="ID" value="DES-STAFF-0001" />
-                  <ProfileInfo label="Event" value="Full Access" />
-                </div>
-
-                <div className="mt-6 flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/40">
-                      Scan to verify
-                    </p>
-                    <p className="mt-1 font-bold">Official DES identity</p>
-                  </div>
-
-                  <div className="grid h-20 w-20 place-items-center rounded-xl bg-white text-4xl text-black">
-                    ▦
-                  </div>
+                <div className="mt-6 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/10 p-5">
+                  <p className="font-black text-yellow-400">
+                    Built for serious football activity
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-white/70">
+                    DES is being designed as a private football ecosystem where
+                    identity, opportunity, events, scouting and partnerships can
+                    work together in one platform.
+                  </p>
                 </div>
               </div>
 
@@ -233,7 +256,7 @@ export default function Home() {
 
           <p className="max-w-xl text-white/60">
             Every portal is designed to protect the DES brand, verify people,
-            organize opportunities, and make every trial or meeting look
+            organise opportunities, and make every trial or meeting look
             professional.
           </p>
         </div>
@@ -502,13 +525,18 @@ export default function Home() {
   );
 }
 
-function ProfileInfo({ label, value }) {
+function WelcomeFeature({ icon, title, text }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
-      <p className="text-xs uppercase tracking-[0.18em] text-white/35">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-bold text-white/85">{value}</p>
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+      <div className="flex items-start gap-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-yellow-500/15 text-2xl">
+          {icon}
+        </div>
+        <div>
+          <h3 className="font-black text-white">{title}</h3>
+          <p className="mt-2 text-sm leading-6 text-white/60">{text}</p>
+        </div>
+      </div>
     </div>
   );
 }
