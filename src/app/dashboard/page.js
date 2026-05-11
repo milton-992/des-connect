@@ -50,10 +50,10 @@ export default function DashboardPage() {
       icon: "🪪",
     },
     {
-      title: "Registration",
-      text: "Choose or review your DES pathway.",
-      link: "/register",
-      icon: "📝",
+      title: "Admin Preview",
+      text: "Open the hidden DES control-room preview.",
+      link: "/admin",
+      icon: "🛡️",
     },
     {
       title: "DES Academy",
@@ -94,17 +94,17 @@ export default function DashboardPage() {
 
           <div className="flex items-center gap-3">
             <a
-              href="/id/milton"
+              href="/admin"
               className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
             >
-              My DES ID
+              Admin
             </a>
 
             <a
-              href="/"
+              href="/id/milton"
               className="rounded-full bg-yellow-500 px-5 py-3 text-sm font-black text-black hover:bg-yellow-400"
             >
-              Home
+              My DES ID
             </a>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function DashboardPage() {
             </p>
             <p className="mt-3 text-sm leading-6 text-white/70">
               This is visual for now. Later, after Supabase is connected, this
-              page will show real account data.
+              page will show real account data and protected admin access.
             </p>
           </div>
         </div>
@@ -227,12 +227,21 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <a
-              href="/id/milton"
-              className="mt-6 block w-full rounded-full bg-yellow-500 px-8 py-4 text-center font-black text-black hover:bg-yellow-400"
-            >
-              View My DES ID →
-            </a>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <a
+                href="/id/milton"
+                className="block rounded-full bg-yellow-500 px-8 py-4 text-center font-black text-black hover:bg-yellow-400"
+              >
+                View My DES ID →
+              </a>
+
+              <a
+                href="/admin"
+                className="block rounded-full border border-white/15 bg-white/5 px-8 py-4 text-center font-bold text-white hover:bg-white/10"
+              >
+                Open Admin Preview →
+              </a>
+            </div>
           </div>
         </div>
 
@@ -271,8 +280,8 @@ export default function DashboardPage() {
           </div>
 
           <p className="max-w-xl text-white/60">
-            These links help users move to registration, academy, events, or the
-            main website. Later, they will be personalised by account type.
+            These links help users move to DES ID, admin preview, academy, and
+            events. Later, they will be personalised by account type.
           </p>
         </div>
 
@@ -312,9 +321,9 @@ export default function DashboardPage() {
               </h2>
 
               <p className="mt-5 text-white/65 leading-7">
-                For your Founder & CEO account, the dashboard will later include
-                private Super Admin permissions. This means your visible profile
-                is Staff / Founder, but your hidden system role is Super Admin.
+                For your Founder & CEO account, the dashboard now includes a
+                direct link to the Admin Preview. Later, Supabase will protect
+                this page so only Super Admin accounts can access it.
               </p>
 
               <div className="mt-7 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/10 p-5">
@@ -326,6 +335,13 @@ export default function DashboardPage() {
                   Founder & CEO · Admin Level: Super Admin · QR Status: Active
                 </p>
               </div>
+
+              <a
+                href="/admin"
+                className="mt-7 inline-flex rounded-full bg-yellow-500 px-8 py-4 text-center font-black text-black hover:bg-yellow-400"
+              >
+                Open Admin Preview →
+              </a>
             </div>
 
             <div className="grid gap-3">
