@@ -1,116 +1,77 @@
-export default function AdminPage() {
+import { supabaseAdmin } from "../../lib/supabaseAdmin";
+
+export default async function AdminPage() {
+  const { data: playerApplications, error } = await supabaseAdmin
+    .from("player_applications")
+    .select(
+      "id, full_name, email, nationality, current_country, position, secondary_position, preferred_foot, current_club, playing_level, application_status, created_at, notes"
+    )
+    .order("created_at", { ascending: false });
+
+  const players = playerApplications || [];
+
   const overviewCards = [
     {
       title: "Player Applications",
-      value: "12",
-      status: "Pending Review",
+      value: String(players.length),
+      status: "Live From Supabase",
       icon: "⚽",
-      text: "Review new player submissions, football profiles, video links, and DES eligibility.",
+      text: "Real player applications submitted from the DES website player registration form.",
     },
     {
       title: "Coach Applications",
-      value: "4",
-      status: "Pending Review",
+      value: "Soon",
+      status: "Next Table",
       icon: "📋",
-      text: "Approve, reject, or request more information from coaches joining the DES network.",
+      text: "Coach applications will be connected after player applications are working properly.",
     },
     {
       title: "Scout Applications",
-      value: "9",
+      value: "Soon",
       status: "Academy Required",
       icon: "🔎",
-      text: "Check scout applicants, academy progress, ethics agreement, and market coverage.",
+      text: "Scout applications will later connect with DES Academy progress and certificates.",
     },
     {
       title: "Staff / Volunteers",
-      value: "6",
+      value: "Soon",
       status: "Access Pending",
       icon: "🪪",
-      text: "Review event staff, volunteers, internal roles, QR access, and lanyard permissions.",
-    },
-  ];
-
-  const pendingItems = [
-    {
-      name: "Player Applicant",
-      type: "Right Winger",
-      detail: "U23 · Portugal / UAE market · Highlights submitted",
-      status: "Pending",
-      icon: "⚽",
-    },
-    {
-      name: "Coach Applicant",
-      type: "UEFA B Coach",
-      detail: "Open to offers · Youth and senior experience",
-      status: "Review",
-      icon: "📋",
-    },
-    {
-      name: "Scout Applicant",
-      type: "Angola Market",
-      detail: "Grassroots and academy connections · Academy test required",
-      status: "Training",
-      icon: "🔎",
-    },
-    {
-      name: "Staff Applicant",
-      type: "Event Volunteer",
-      detail: "Registration desk and access control support",
-      status: "Pending",
-      icon: "🪪",
+      text: "Staff and volunteer applications will later connect with DES ID and event access.",
     },
   ];
 
   const adminTools = [
     {
-      title: "Approve Profiles",
+      title: "Review Applications",
       icon: "✅",
-      text: "Approve or reject players, coaches, scouts, and staff before their profiles become active.",
+      text: "View real player applications submitted through the DES website.",
+    },
+    {
+      title: "Approve Profiles",
+      icon: "🛡️",
+      text: "Later, admins will approve, reject, hold, or suspend profiles.",
     },
     {
       title: "Activate QR IDs",
       icon: "▦",
-      text: "Turn DES ID pages on or off depending on approval status and access level.",
+      text: "Approved users can later receive a unique verified DES ID page.",
     },
     {
-      title: "Manage Events",
-      icon: "📅",
-      text: "Create trials, showcases, scouting days, staff lists, and event access permissions.",
-    },
-    {
-      title: "Review Academy",
+      title: "Manage Academy",
       icon: "🎓",
-      text: "Track scout and staff training progress, final tests, and completion status.",
+      text: "Track study material progress, assessments, and certificates.",
     },
     {
       title: "Club Requests",
       icon: "🏟️",
-      text: "Review club recruitment needs and prepare shortlists of suitable DES profiles.",
+      text: "Later, clubs can submit recruitment needs and request shortlists.",
     },
     {
       title: "Partner Requests",
       icon: "🤝",
-      text: "Review sponsor, media, service, and commercial partnership enquiries.",
+      text: "Later, sponsors and partners can submit partnership enquiries.",
     },
-  ];
-
-  const quickActions = [
-    "Approve player profile",
-    "Reject application",
-    "Request more information",
-    "Assign DES ID",
-    "Activate QR code",
-    "Suspend profile",
-    "Create event",
-    "Export attendee list",
-  ];
-
-  const activityLog = [
-    "DES ID preview created for Milton M.",
-    "Domain connected successfully: www.des-uae.com",
-    "QR code package installed and live ID page updated.",
-    "Register pathways created for Player, Coach, Scout, and Staff.",
-    "Clubs and Partners pages added to public website.",
   ];
 
   return (
@@ -157,8 +118,8 @@ export default function AdminPage() {
       <section className="mx-auto max-w-7xl px-6 py-16 md:py-20">
         <div className="mb-10 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-950/30 px-4 py-2 text-sm text-red-100">
-              🛡️ DES Super Admin Preview
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-950/30 px-4 py-2 text-sm text-green-100">
+              🛡️ DES Super Admin · Supabase Connected
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
@@ -167,9 +128,8 @@ export default function AdminPage() {
             </h1>
 
             <p className="mt-7 max-w-2xl text-lg leading-8 text-white/70">
-              This page previews the future admin command centre for approving
-              profiles, activating QR IDs, managing events, reviewing academy
-              progress, and controlling DES access.
+              This admin page is now connected to Supabase. Player applications
+              submitted through the DES website can appear here for review.
             </p>
           </div>
 
@@ -178,11 +138,20 @@ export default function AdminPage() {
               Founder Access
             </p>
             <p className="mt-3 text-sm leading-6 text-white/70">
-              Milton M. · Founder & CEO · Super Admin preview. Later this page
-              will be protected by Supabase login permissions.
+              This page is still public visually. Later, Supabase Auth will
+              protect it so only Super Admin accounts can open it.
             </p>
           </div>
         </div>
+
+        {error && (
+          <div className="mb-8 rounded-[1.5rem] border border-red-500/30 bg-red-950/30 p-5">
+            <p className="font-black text-red-100">Supabase Read Error</p>
+            <p className="mt-2 text-sm leading-6 text-red-100/80">
+              {error.message}
+            </p>
+          </div>
+        )}
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {overviewCards.map((card) => (
@@ -214,91 +183,139 @@ export default function AdminPage() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-6 px-6 pb-16 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="mx-auto max-w-7xl px-6 pb-16">
         <div className="rounded-[2rem] border border-white/10 bg-[#101010] p-6 md:p-8">
           <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.3em] text-yellow-400">
-                Pending Queue
+                Real Player Applications
               </p>
               <h2 className="mt-3 text-3xl font-black md:text-4xl">
-                Applications waiting for action.
+                Submitted from the DES player form.
               </h2>
             </div>
 
-            <span className="rounded-full border border-red-500/25 bg-red-950/30 px-4 py-2 text-sm font-bold text-red-100">
-              Preview data
+            <span className="rounded-full border border-green-500/25 bg-green-950/30 px-4 py-2 text-sm font-bold text-green-100">
+              Supabase live data
             </span>
           </div>
 
-          <div className="space-y-4">
-            {pendingItems.map((item) => (
-              <div
-                key={item.name}
-                className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5"
+          {players.length === 0 ? (
+            <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6">
+              <p className="text-xl font-black text-white">
+                No player applications yet.
+              </p>
+              <p className="mt-2 text-sm leading-6 text-white/60">
+                Submit a test application from /register/player and it should
+                appear here.
+              </p>
+
+              <a
+                href="/register/player"
+                className="mt-6 inline-flex rounded-full bg-yellow-500 px-6 py-3 font-black text-black hover:bg-yellow-400"
               >
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-yellow-500/20 to-red-700/20 text-2xl">
-                      {item.icon}
-                    </div>
-
+                Open Player Form →
+              </a>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {players.map((player) => (
+                <div
+                  key={player.id}
+                  className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5"
+                >
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                      <h3 className="text-xl font-black">{item.name}</h3>
-                      <p className="mt-1 text-sm font-semibold text-yellow-400">
-                        {item.type}
+                      <div className="mb-3 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-yellow-400">
+                        {player.application_status || "pending"}
+                      </div>
+
+                      <h3 className="text-2xl font-black">
+                        {player.full_name}
+                      </h3>
+
+                      <p className="mt-2 text-sm text-white/55">
+                        {player.email}
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-white/60">
-                        {item.detail}
-                      </p>
+
+                      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <ApplicationInfo
+                          label="Position"
+                          value={player.position || "Not provided"}
+                        />
+                        <ApplicationInfo
+                          label="Secondary"
+                          value={player.secondary_position || "Not provided"}
+                        />
+                        <ApplicationInfo
+                          label="Foot"
+                          value={player.preferred_foot || "Not provided"}
+                        />
+                        <ApplicationInfo
+                          label="Nationality"
+                          value={player.nationality || "Not provided"}
+                        />
+                        <ApplicationInfo
+                          label="Country"
+                          value={player.current_country || "Not provided"}
+                        />
+                        <ApplicationInfo
+                          label="Current Club"
+                          value={player.current_club || "Not provided"}
+                        />
+                        <ApplicationInfo
+                          label="Level"
+                          value={player.playing_level || "Not provided"}
+                        />
+                        <ApplicationInfo
+                          label="Submitted"
+                          value={
+                            player.created_at
+                              ? new Date(player.created_at).toLocaleDateString()
+                              : "Not provided"
+                          }
+                        />
+                      </div>
+
+                      {player.notes && (
+                        <div className="mt-5 rounded-2xl border border-white/10 bg-black/35 p-4">
+                          <p className="text-xs uppercase tracking-[0.18em] text-white/35">
+                            Notes / Bio / Extra Info
+                          </p>
+                          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/65">
+                            {player.notes}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  </div>
 
-                  <div className="flex flex-col gap-3 sm:flex-row">
-                    <button
-                      type="button"
-                      className="rounded-full bg-yellow-500 px-5 py-3 text-sm font-black text-black hover:bg-yellow-400"
-                    >
-                      Review
-                    </button>
+                    <div className="grid min-w-[190px] gap-3">
+                      <button
+                        type="button"
+                        className="rounded-full bg-yellow-500 px-5 py-3 text-sm font-black text-black hover:bg-yellow-400"
+                      >
+                        Review
+                      </button>
 
-                    <button
-                      type="button"
-                      className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
-                    >
-                      Hold
-                    </button>
+                      <button
+                        type="button"
+                        className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
+                      >
+                        Approve Soon
+                      </button>
+
+                      <button
+                        type="button"
+                        className="rounded-full border border-red-500/30 bg-red-950/30 px-5 py-3 text-sm font-bold text-red-100 hover:bg-red-950/50"
+                      >
+                        Reject Soon
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 md:p-8">
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-yellow-400">
-            Quick Actions
-          </p>
-
-          <h2 className="mt-3 text-3xl font-black md:text-4xl">
-            Admin actions.
-          </h2>
-
-          <p className="mt-4 text-sm leading-6 text-white/60">
-            These actions will become real once the backend is connected.
-          </p>
-
-          <div className="mt-8 grid gap-3">
-            {quickActions.map((action) => (
-              <button
-                key={action}
-                type="button"
-                className="rounded-2xl border border-white/10 bg-black/35 p-4 text-left font-semibold text-white/85 hover:border-yellow-400/40"
-              >
-                ✅ {action}
-              </button>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -315,8 +332,8 @@ export default function AdminPage() {
           </div>
 
           <p className="max-w-xl text-white/60">
-            The admin area will connect the whole DES platform: applications,
-            QR IDs, events, academy progress, clubs, partners, and approvals.
+            The admin area will eventually control applications, QR IDs, events,
+            academy progress, clubs, partners, and approvals.
           </p>
         </div>
 
@@ -340,144 +357,41 @@ export default function AdminPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="rounded-[2rem] border border-yellow-400/20 bg-gradient-to-br from-yellow-500/10 via-white/[0.03] to-red-900/20 p-8 md:p-12">
-          <div className="grid gap-10 lg:grid-cols-[1fr_0.9fr] lg:items-center">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-yellow-400">
-                Founder Profile Permissions
-              </p>
-
-              <h2 className="mt-3 text-4xl font-black md:text-5xl">
-                Publicly Staff. Privately Super Admin.
-              </h2>
-
-              <p className="mt-5 text-white/65 leading-7">
-                Your visible DES ID profile should show Founder & CEO under the
-                Staff / Leadership category. Behind the scenes, your account
-                should have Super Admin permissions to control the system.
-              </p>
-
-              <a
-                href="/id/milton"
-                className="mt-7 inline-flex rounded-full bg-yellow-500 px-8 py-4 text-center font-black text-black hover:bg-yellow-400"
-              >
-                View Founder DES ID →
-              </a>
-            </div>
-
-            <div className="rounded-[1.75rem] border border-white/10 bg-black/40 p-6">
-              <div className="grid gap-3">
-                <PermissionRow label="Profile Type" value="Staff / Founder" />
-                <PermissionRow label="Staff Type" value="Founder / Leadership" />
-                <PermissionRow label="Visible Role" value="Founder & CEO" />
-                <PermissionRow label="System Role" value="Super Admin" />
-                <PermissionRow label="QR Status" value="Active" />
-                <PermissionRow label="Event Access" value="Full Access" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto grid max-w-7xl gap-6 px-6 py-16 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 md:p-8">
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-yellow-400">
-            Activity Log
-          </p>
-
-          <h2 className="mt-3 text-3xl font-black md:text-4xl">
-            Recent DES platform activity.
-          </h2>
-
-          <div className="mt-8 space-y-3">
-            {activityLog.map((item) => (
-              <div
-                key={item}
-                className="rounded-2xl border border-white/10 bg-black/35 p-4"
-              >
-                <p className="text-sm leading-6 text-white/70">✅ {item}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-[2rem] border border-white/10 bg-[#101010] p-6 md:p-8">
-          <p className="text-sm font-bold uppercase tracking-[0.3em] text-yellow-400">
-            Backend Roadmap
-          </p>
-
-          <h2 className="mt-3 text-3xl font-black md:text-4xl">
-            What Supabase will unlock.
-          </h2>
-
-          <div className="mt-8 grid gap-4">
-            <RoadmapRow
-              title="Real login"
-              text="Users log in with email and password, then see their own dashboard."
-            />
-            <RoadmapRow
-              title="Application storage"
-              text="Forms save to the DES database instead of only being visual."
-            />
-            <RoadmapRow
-              title="Admin review"
-              text="Super Admin can approve, reject, suspend, or request more information."
-            />
-            <RoadmapRow
-              title="QR generation"
-              text="Each approved user receives a unique DES ID and live QR profile."
-            />
-            <RoadmapRow
-              title="Mobile app ready"
-              text="The future iOS app can use the same users and database."
-            />
-          </div>
-        </div>
-      </section>
-
       <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="overflow-hidden rounded-[2rem] border border-red-500/20 bg-gradient-to-r from-red-950/50 via-black to-yellow-950/30 p-8 md:p-12">
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.3em] text-yellow-400">
-                Next Serious Build Step
+                Next Admin Build Step
               </p>
 
               <h2 className="mt-3 text-4xl font-black md:text-6xl">
-                Connect the real backend.
+                Add approve and reject actions.
               </h2>
 
               <p className="mt-5 max-w-2xl text-white/65 leading-7">
-                The admin page gives us the control-room design. The next major
-                technical phase is Supabase: real login, saved applications,
-                database tables, and admin approval.
+                Now that admin can read real applications, the next step is to
+                update application_status from pending to approved, rejected, or
+                on hold.
               </p>
             </div>
 
             <div className="rounded-[1.75rem] border border-white/10 bg-black/40 p-6">
-              <h3 className="text-2xl font-black">Before Supabase</h3>
-
-              <p className="mt-3 text-white/60">
-                We can still create sample ID pages for players, coaches,
-                scouts, and staff before connecting the database.
-              </p>
+              <h3 className="text-2xl font-black">Current Backend Status</h3>
 
               <div className="mt-6 grid gap-3">
-                <a
-                  href="/dashboard"
-                  className="block w-full rounded-full border border-white/15 bg-white/5 px-6 py-4 text-center text-base font-bold text-white hover:bg-white/10"
-                >
-                  Back to Dashboard →
-                </a>
-
-                <a
-                  href="/id/milton"
-                  className="block w-full rounded-full bg-yellow-500 px-6 py-4 text-center text-base font-black text-black hover:bg-yellow-400"
-                >
-                  View DES ID →
-                </a>
+                <StatusRow label="Supabase Project" value="Connected" />
+                <StatusRow label="Player Form" value="Saving Data" />
+                <StatusRow label="Admin Read" value="Live Data" />
+                <StatusRow label="Approve Button" value="Next Step" />
               </div>
+
+              <a
+                href="/register/player"
+                className="mt-7 block rounded-full bg-yellow-500 px-8 py-4 text-center font-black text-black hover:bg-yellow-400"
+              >
+                Submit Another Test →
+              </a>
             </div>
           </div>
         </div>
@@ -490,22 +404,24 @@ export default function AdminPage() {
   );
 }
 
-function PermissionRow({ label, value }) {
+function ApplicationInfo({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/35 p-3">
+      <p className="text-xs uppercase tracking-[0.18em] text-white/35">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-bold text-white/85">{value}</p>
+    </div>
+  );
+}
+
+function StatusRow({ label, value }) {
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
       <p className="text-xs uppercase tracking-[0.18em] text-white/35">
         {label}
       </p>
-      <p className="text-sm font-bold text-white/85">{value}</p>
-    </div>
-  );
-}
-
-function RoadmapRow({ title, text }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
-      <p className="font-black text-white">✅ {title}</p>
-      <p className="mt-2 text-sm leading-6 text-white/60">{text}</p>
+      <p className="text-sm font-bold text-yellow-400">{value}</p>
     </div>
   );
 }
