@@ -14,7 +14,7 @@ export default function DashboardPage() {
     },
     {
       title: "Academy Progress",
-      value: "Not Started",
+      value: "In Progress",
       icon: "🎓",
       text: "Scouts and staff may need to complete DES Academy training before approval.",
     },
@@ -66,6 +66,47 @@ export default function DashboardPage() {
       text: "Trials, showcases, and future check-ins.",
       link: "/events",
       icon: "📅",
+    },
+  ];
+
+  const academyProgress = [
+    {
+      title: "DES Scouting Methodology",
+      status: "Available",
+      text: "First DES study material module is ready to view.",
+      link: "/academy/materials/scouting-methodology",
+      button: "Continue Lesson →",
+    },
+    {
+      title: "Player Evaluation Criteria",
+      status: "Coming Soon",
+      text: "Future module for evaluating technical, tactical, physical, mental, and professional qualities.",
+      link: "/academy/materials",
+      button: "View Materials →",
+    },
+    {
+      title: "Academy Assessment",
+      status: "After Supabase",
+      text: "Future test system that unlocks admin review and certificates.",
+      link: "/academy",
+      button: "View Academy →",
+    },
+  ];
+
+  const certificates = [
+    {
+      title: "DES Scouting Methodology Certificate",
+      status: "Preview",
+      text: "Will be issued after study completion, assessment, and admin approval.",
+      action: "View Certificate Preview →",
+      link: "/academy/certificates",
+    },
+    {
+      title: "DES Event Staff Certificate",
+      status: "Locked",
+      text: "Future certificate for approved staff and volunteers.",
+      action: "Coming Soon",
+      link: "/academy/certificates",
     },
   ];
 
@@ -124,8 +165,8 @@ export default function DashboardPage() {
 
             <p className="mt-7 max-w-2xl text-lg leading-8 text-white/70">
               This dashboard will become the central area for profiles,
-              approvals, QR identity, academy progress, events, and admin
-              controls.
+              approvals, QR identity, academy progress, certificates, events,
+              and admin controls.
             </p>
           </div>
 
@@ -135,7 +176,8 @@ export default function DashboardPage() {
             </p>
             <p className="mt-3 text-sm leading-6 text-white/70">
               This is visual for now. Later, after Supabase is connected, this
-              page will show real account data and protected admin access.
+              page will show real account data, course progress, certificates,
+              and protected admin access.
             </p>
           </div>
         </div>
@@ -268,6 +310,133 @@ export default function DashboardPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-16">
+        <div className="rounded-[2rem] border border-yellow-400/20 bg-gradient-to-br from-yellow-500/10 via-white/[0.03] to-red-900/20 p-8 md:p-12">
+          <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.3em] text-yellow-400">
+                My Academy
+              </p>
+
+              <h2 className="mt-3 text-4xl font-black md:text-5xl">
+                Course progress and certificates.
+              </h2>
+            </div>
+
+            <p className="max-w-xl text-white/60">
+              This section previews how users will later track DES Academy
+              learning, assessments, certificates, and downloads inside their
+              dashboard.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+            <div className="rounded-[1.75rem] border border-white/10 bg-black/35 p-6">
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-[0.25em] text-yellow-400">
+                    Academy Progress
+                  </p>
+                  <h3 className="mt-2 text-3xl font-black">
+                    Continue learning.
+                  </h3>
+                </div>
+
+                <div className="text-5xl">🎓</div>
+              </div>
+
+              <div className="grid gap-4">
+                {academyProgress.map((item) => (
+                  <div
+                    key={item.title}
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <div className="mb-2 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-yellow-400">
+                          {item.status}
+                        </div>
+
+                        <h4 className="text-xl font-black">{item.title}</h4>
+
+                        <p className="mt-2 text-sm leading-6 text-white/60">
+                          {item.text}
+                        </p>
+                      </div>
+
+                      <a
+                        href={item.link}
+                        className="shrink-0 rounded-full border border-white/15 bg-white/5 px-5 py-3 text-center text-sm font-bold text-white hover:bg-white/10"
+                      >
+                        {item.button}
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <a
+                href="/academy/materials"
+                className="mt-6 block rounded-full bg-yellow-500 px-8 py-4 text-center font-black text-black hover:bg-yellow-400"
+              >
+                Open All Study Materials →
+              </a>
+            </div>
+
+            <div className="rounded-[1.75rem] border border-white/10 bg-black/35 p-6">
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold uppercase tracking-[0.25em] text-yellow-400">
+                    My Certificates
+                  </p>
+                  <h3 className="mt-2 text-3xl font-black">
+                    View and download.
+                  </h3>
+                </div>
+
+                <div className="text-5xl">🏆</div>
+              </div>
+
+              <div className="grid gap-4">
+                {certificates.map((cert) => (
+                  <div
+                    key={cert.title}
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
+                  >
+                    <div className="mb-3 inline-flex rounded-full border border-green-500/25 bg-green-950/25 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-green-200">
+                      {cert.status}
+                    </div>
+
+                    <h4 className="text-xl font-black">{cert.title}</h4>
+
+                    <p className="mt-2 text-sm leading-6 text-white/60">
+                      {cert.text}
+                    </p>
+
+                    <a
+                      href={cert.link}
+                      className="mt-5 block rounded-full border border-white/15 bg-white/5 px-5 py-3 text-center text-sm font-bold text-white hover:bg-white/10"
+                    >
+                      {cert.action}
+                    </a>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/10 p-5">
+                <p className="font-black text-yellow-400">
+                  Future PDF download
+                </p>
+                <p className="mt-2 text-sm leading-6 text-white/70">
+                  After Supabase, passed users can download certificates from
+                  their dashboard and verify them by QR code.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-16">
         <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.3em] text-yellow-400">
@@ -373,7 +542,7 @@ export default function DashboardPage() {
               <p className="mt-5 text-white/65 leading-7">
                 Once we connect Supabase, this dashboard can show real user
                 profiles, application status, QR codes, academy progress,
-                events, file uploads, and admin approval tools.
+                certificates, events, file uploads, and admin approval tools.
               </p>
             </div>
 
@@ -391,8 +560,8 @@ export default function DashboardPage() {
                 text="DES leadership can approve, reject, or suspend users."
               />
               <FutureRow
-                title="QR profile generation"
-                text="Each approved user receives a unique verified profile."
+                title="Certificate generation"
+                text="Passed users can receive certificates in their dashboard."
               />
               <FutureRow
                 title="Event and academy tracking"
