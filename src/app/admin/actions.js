@@ -78,9 +78,8 @@ export async function assignPlayerDesId(formData) {
     throw new Error("Player application not found.");
   }
 
-  // IMPORTANT:
-  // If the player already has a DES ID, do NOT reset visibility or QR status.
-  // Only save admin notes and refresh the page.
+  // If the player already has a DES ID, do not reset visibility or QR status.
+  // Only save admin notes and refresh the admin/profile pages.
   if (currentApplication.des_id) {
     const updatePayload = {};
 
@@ -124,9 +123,7 @@ export async function assignPlayerDesId(formData) {
     })
     .filter((number) => Number.isFinite(number));
 
-  const nextNumber =
-    usedNumbers.length > 0 ? Math.max(...usedNumbers) + 1 : 1;
-
+  const nextNumber = usedNumbers.length > 0 ? Math.max(...usedNumbers) + 1 : 1;
   const paddedNumber = String(nextNumber).padStart(4, "0");
 
   const newDesId = `DES-PLAYER-${paddedNumber}`;
