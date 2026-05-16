@@ -38,16 +38,22 @@ export async function updatePlayerApplicationStatus(formData) {
     updatePayload.admin_notes = adminNotes.trim() || null;
   }
 
-  const { error } = await supabaseAdmin
+  const { data: updatedPlayer, error } = await supabaseAdmin
     .from("player_applications")
     .update(updatePayload)
-    .eq("id", applicationId);
+    .eq("id", applicationId)
+    .select("profile_slug")
+    .single();
 
   if (error) {
     throw new Error(error.message);
   }
 
   revalidatePath("/admin");
+
+  if (updatedPlayer?.profile_slug) {
+    revalidatePath(`/id/${updatedPlayer.profile_slug}`);
+  }
 }
 
 export async function assignPlayerDesId(formData) {
@@ -72,26 +78,33 @@ export async function assignPlayerDesId(formData) {
     throw new Error("Player application not found.");
   }
 
+  // IMPORTANT:
+  // If the player already has a DES ID, do NOT reset visibility or QR status.
+  // Only save admin notes and refresh the page.
   if (currentApplication.des_id) {
-    const updatePayload = {
-      profile_visibility: "private",
-      qr_status: "inactive",
-    };
+    const updatePayload = {};
 
     if (typeof adminNotes === "string") {
       updatePayload.admin_notes = adminNotes.trim() || null;
     }
 
-    const { error } = await supabaseAdmin
-      .from("player_applications")
-      .update(updatePayload)
-      .eq("id", applicationId);
+    if (Object.keys(updatePayload).length > 0) {
+      const { error } = await supabaseAdmin
+        .from("player_applications")
+        .update(updatePayload)
+        .eq("id", applicationId);
 
-    if (error) {
-      throw new Error(error.message);
+      if (error) {
+        throw new Error(error.message);
+      }
     }
 
     revalidatePath("/admin");
+
+    if (currentApplication.profile_slug) {
+      revalidatePath(`/id/${currentApplication.profile_slug}`);
+    }
+
     return;
   }
 
@@ -142,4 +155,45 @@ export async function assignPlayerDesId(formData) {
   }
 
   revalidatePath("/admin");
+  revalidatePath(`/id/${newProfileSlug}`);
+}
+
+export async function updatePlayerProfileControls(formData) {
+  const applicationId = formData.get("applicationId");
+  const profileSlug = formData.get("profileSlug");
+  const profileVisibility = formData.get("profileVisibility");
+  const qrStatus = formData.get("qrStatus");
+
+  if (!applicationId) {
+    throw new Error("Missing application ID.");
+  }
+
+  const allowedVisibility = ["private", "public"];
+  const allowedQrStatus = ["inactive", "active"];
+
+  if (!allowedVisibility.includes(profileVisibility)) {
+    throw new Error("Invalid profile visibility.");
+  }
+
+  if (!allowedQrStatus.includes(qrStatus)) {
+    throw new Error("Invalid QR status.");
+  }
+
+  const { error } = await supabaseAdmin
+    .from("player_applications")
+    .update({
+      profile_visibility: profileVisibility,
+      qr_status: qrStatus,
+    })
+    .eq("id", applicationId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/admin");
+
+  if (profileSlug) {
+    revalidatePath(`/id/${profileSlug}`);
+  }
 }

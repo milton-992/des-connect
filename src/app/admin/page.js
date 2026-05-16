@@ -2,6 +2,7 @@ import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import {
   assignPlayerDesId,
   updatePlayerApplicationStatus,
+  updatePlayerProfileControls,
 } from "./actions";
 
 export default async function AdminPage() {
@@ -22,12 +23,12 @@ export default async function AdminPage() {
     (player) => player.application_status === "approved"
   );
 
-  const rejectedPlayers = players.filter(
-    (player) => player.application_status === "rejected"
+  const publicProfiles = players.filter(
+    (player) => player.profile_visibility === "public"
   );
 
-  const onHoldPlayers = players.filter(
-    (player) => player.application_status === "on_hold"
+  const activeQrProfiles = players.filter(
+    (player) => player.qr_status === "active"
   );
 
   const assignedDesIds = players.filter((player) => player.des_id);
@@ -48,18 +49,18 @@ export default async function AdminPage() {
       text: "Players waiting for DES admin review.",
     },
     {
-      title: "Approved",
-      value: String(approvedPlayers.length),
-      status: "DES Ready",
-      icon: "✅",
-      text: "Players approved by DES admin.",
-    },
-    {
       title: "DES IDs Assigned",
       value: String(assignedDesIds.length),
       status: "Profile Prep",
       icon: "▦",
       text: "Approved players prepared with DES ID and profile slug.",
+    },
+    {
+      title: "Public / QR Active",
+      value: `${publicProfiles.length}/${activeQrProfiles.length}`,
+      status: "Controlled",
+      icon: "🌍",
+      text: "Public profiles and active QR profiles controlled by admin.",
     },
   ];
 
@@ -75,24 +76,24 @@ export default async function AdminPage() {
       text: "Generate a DES player ID and private profile slug.",
     },
     {
-      title: "Reject Applications",
-      icon: "⛔",
-      text: "Reject applications that do not meet DES standards.",
-    },
-    {
-      title: "Place On Hold",
-      icon: "🟡",
-      text: "Pause applications that need more information or video review.",
-    },
-    {
-      title: "Admin Notes",
-      icon: "📝",
-      text: "Save internal review notes for each player application.",
-    },
-    {
-      title: "Future Public Profiles",
+      title: "Profile Visibility",
       icon: "🌍",
-      text: "Approved players can later receive public QR profile pages.",
+      text: "Control whether a profile is private or public.",
+    },
+    {
+      title: "QR Activation",
+      icon: "📱",
+      text: "Control whether the QR profile is inactive or active.",
+    },
+    {
+      title: "View DES Profiles",
+      icon: "👁️",
+      text: "Open verified DES player profile pages directly from admin.",
+    },
+    {
+      title: "Future Security",
+      icon: "🛡️",
+      text: "Later, only protected admin accounts will access these controls.",
     },
   ];
 
@@ -141,28 +142,28 @@ export default async function AdminPage() {
         <div className="mb-10 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-950/30 px-4 py-2 text-sm text-green-100">
-              🛡️ DES Super Admin · DES ID Assignment Live
+              🛡️ DES Super Admin · Profile Controls Live
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-              Review, approve and{" "}
-              <span className="text-yellow-400">prepare profiles.</span>
+              Control profile{" "}
+              <span className="text-yellow-400">visibility and QR.</span>
             </h1>
 
             <p className="mt-7 max-w-2xl text-lg leading-8 text-white/70">
-              This admin page now reads real player applications, updates their
-              review status, saves admin notes, and assigns DES Player IDs for
-              approved profile preparation.
+              This admin page reads real player applications, updates review
+              status, saves admin notes, assigns DES Player IDs, opens verified
+              profiles, and controls public/private plus QR activation.
             </p>
           </div>
 
           <div className="rounded-[2rem] border border-yellow-400/20 bg-yellow-400/10 p-5 lg:max-w-sm">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
-              Profile Preparation
+              Visibility Control
             </p>
             <p className="mt-3 text-sm leading-6 text-white/70">
-              Assigning a DES ID prepares the player for a future verified DES
-              profile and QR page. The profile remains private until activated.
+              Keep profiles private until DES is ready. Activate public profile
+              and QR only when the player is approved for official sharing.
             </p>
           </div>
         </div>
@@ -214,7 +215,7 @@ export default async function AdminPage() {
                 Real Player Applications
               </p>
               <h2 className="mt-3 text-3xl font-black md:text-4xl">
-                Review, update, assign DES ID.
+                Review, assign, open and control profile.
               </h2>
             </div>
 
@@ -260,11 +261,27 @@ export default async function AdminPage() {
                           </span>
                         )}
 
-                        {!player.des_id && (
-                          <span className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-white/45">
-                            No DES ID Yet
-                          </span>
-                        )}
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ${
+                            player.profile_visibility === "public"
+                              ? "border-green-500/25 bg-green-950/30 text-green-200"
+                              : "border-white/10 bg-white/[0.04] text-white/45"
+                          }`}
+                        >
+                          {player.profile_visibility === "public"
+                            ? "Public"
+                            : "Private"}
+                        </span>
+
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ${
+                            player.qr_status === "active"
+                              ? "border-green-500/25 bg-green-950/30 text-green-200"
+                              : "border-white/10 bg-white/[0.04] text-white/45"
+                          }`}
+                        >
+                          QR {player.qr_status === "active" ? "Active" : "Inactive"}
+                        </span>
                       </div>
 
                       <h3 className="text-2xl font-black">
@@ -332,6 +349,25 @@ export default async function AdminPage() {
                           value={player.qr_status || "inactive"}
                         />
                       </div>
+
+                      {player.des_id && player.profile_slug && (
+                        <div className="mt-5 rounded-2xl border border-green-500/20 bg-green-950/20 p-4">
+                          <p className="text-xs uppercase tracking-[0.18em] text-green-200">
+                            DES Profile Link
+                          </p>
+
+                          <p className="mt-2 break-all text-sm font-bold text-white/80">
+                            /id/{player.profile_slug}
+                          </p>
+
+                          <a
+                            href={`/id/${player.profile_slug}`}
+                            className="mt-4 inline-flex rounded-full bg-yellow-500 px-6 py-3 text-sm font-black text-black hover:bg-yellow-400"
+                          >
+                            View DES Profile →
+                          </a>
+                        </div>
+                      )}
 
                       {player.approved_at && (
                         <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-950/20 p-4">
@@ -463,6 +499,76 @@ export default async function AdminPage() {
                             : "Assign DES ID"}
                         </button>
                       </form>
+
+                      {player.des_id && player.profile_slug && (
+                        <form
+                          action={updatePlayerProfileControls}
+                          className="mt-4 rounded-[1.5rem] border border-green-500/20 bg-green-950/20 p-5"
+                        >
+                          <input
+                            type="hidden"
+                            name="applicationId"
+                            value={player.id}
+                          />
+
+                          <input
+                            type="hidden"
+                            name="profileSlug"
+                            value={player.profile_slug}
+                          />
+
+                          <p className="font-black text-green-200">
+                            Profile Controls
+                          </p>
+
+                          <p className="mt-2 text-sm leading-6 text-white/70">
+                            Control whether this profile can be shared publicly
+                            and whether the QR is active.
+                          </p>
+
+                          <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                            Visibility
+                          </label>
+
+                          <select
+                            name="profileVisibility"
+                            defaultValue={player.profile_visibility || "private"}
+                            className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none focus:border-yellow-400"
+                          >
+                            <option value="private">Private</option>
+                            <option value="public">Public</option>
+                          </select>
+
+                          <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                            QR Status
+                          </label>
+
+                          <select
+                            name="qrStatus"
+                            defaultValue={player.qr_status || "inactive"}
+                            className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none focus:border-yellow-400"
+                          >
+                            <option value="inactive">Inactive</option>
+                            <option value="active">Active</option>
+                          </select>
+
+                          <button
+                            type="submit"
+                            className="mt-4 w-full rounded-full bg-green-500 px-5 py-3 text-sm font-black text-black hover:bg-green-400"
+                          >
+                            Save Profile Controls
+                          </button>
+                        </form>
+                      )}
+
+                      {player.des_id && player.profile_slug && (
+                        <a
+                          href={`/id/${player.profile_slug}`}
+                          className="mt-4 block rounded-full border border-green-500/30 bg-green-950/30 px-5 py-3 text-center text-sm font-black text-green-100 hover:bg-green-950/50"
+                        >
+                          View DES Profile →
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -485,8 +591,8 @@ export default async function AdminPage() {
           </div>
 
           <p className="max-w-xl text-white/60">
-            The admin area now reads and updates real applications, and can
-            prepare approved players for future DES ID profile pages.
+            The admin area now reads and updates real applications, assigns DES
+            IDs, opens verified profiles, and controls visibility plus QR status.
           </p>
         </div>
 
@@ -519,12 +625,13 @@ export default async function AdminPage() {
               </p>
 
               <h2 className="mt-3 text-4xl font-black md:text-6xl">
-                Create real DES player profile pages.
+                Protect admin with login.
               </h2>
 
               <p className="mt-5 max-w-2xl text-white/65 leading-7">
-                Now that DES IDs can be assigned, the next step is dynamic
-                profile pages like /id/player-0001 connected to Supabase.
+                Now that admin controls are working, the next important step is
+                Supabase Auth protection so only DES leadership can access this
+                control room.
               </p>
             </div>
 
@@ -537,6 +644,7 @@ export default async function AdminPage() {
                 <StatusRow label="Admin Read" value="Live Data" />
                 <StatusRow label="Status Buttons" value="Live Actions" />
                 <StatusRow label="DES ID Assignment" value="Live Action" />
+                <StatusRow label="Profile Controls" value="Live Action" />
               </div>
 
               <a

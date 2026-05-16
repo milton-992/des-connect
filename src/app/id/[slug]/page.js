@@ -16,8 +16,12 @@ export default async function DynamicPlayerProfilePage({ params }) {
 
   const isApproved = player?.application_status === "approved";
   const hasDesId = Boolean(player?.des_id);
+  const isPublic = player?.profile_visibility === "public";
+  const isQrActive = player?.qr_status === "active";
 
-  if (error || !player || !isApproved || !hasDesId) {
+  const profileCanBeViewed = isApproved && hasDesId && isPublic && isQrActive;
+
+  if (error || !player || !profileCanBeViewed) {
     return (
       <main className="min-h-screen bg-black text-white">
         <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(180,20,20,0.35),transparent_35%),radial-gradient(circle_at_top_right,rgba(234,179,8,0.2),transparent_30%),linear-gradient(180deg,#050505,#000)]" />
@@ -62,9 +66,21 @@ export default async function DynamicPlayerProfilePage({ params }) {
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
-              This DES profile is not available yet. The player may still be
-              pending review, missing a DES ID, private, or not approved by DES.
+              This DES profile is not currently available. The player may still
+              be pending review, private, missing a DES ID, or the QR profile may
+              not be active yet.
             </p>
+
+            <div className="mt-8 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/10 p-5">
+              <p className="font-black text-yellow-400">
+                Official DES Verification
+              </p>
+              <p className="mt-2 text-sm leading-6 text-white/70">
+                A DES profile is only visible when Draft Elite Sport has
+                approved the player, assigned a DES ID, made the profile public,
+                and activated the QR status.
+              </p>
+            </div>
 
             <a
               href="/"
@@ -126,7 +142,8 @@ export default async function DynamicPlayerProfilePage({ params }) {
 
           <p className="mt-7 max-w-2xl text-lg leading-8 text-white/70">
             This is an approved DES player profile generated from the DES
-            application system and prepared through the DES admin review process.
+            application system and activated through the DES admin review
+            process.
           </p>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -144,7 +161,7 @@ export default async function DynamicPlayerProfilePage({ params }) {
             <StatusBox
               label="Visibility"
               value={formatStatus(player.profile_visibility)}
-              icon="🛡️"
+              icon="🌍"
             />
           </div>
         </div>
@@ -183,7 +200,7 @@ export default async function DynamicPlayerProfilePage({ params }) {
 
                   <div>
                     <div className="mb-3 inline-flex rounded-full border border-green-500/30 bg-green-950/30 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-green-200">
-                      Approved DES Player
+                      Public QR Active
                     </div>
 
                     <h3 className="text-4xl font-black">{player.full_name}</h3>
@@ -243,7 +260,7 @@ export default async function DynamicPlayerProfilePage({ params }) {
                 {player.admin_notes && (
                   <div className="mt-8 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
                     <p className="font-black text-white">
-                      DES Internal Review Note
+                      DES Review Note
                     </p>
 
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/60">
@@ -261,7 +278,7 @@ export default async function DynamicPlayerProfilePage({ params }) {
                     label="Foot"
                     value={player.preferred_foot || "Not provided"}
                   />
-                  <MiniStat label="DES Status" value="Approved" />
+                  <MiniStat label="DES Status" value="Verified" />
                 </div>
               </div>
 
@@ -277,7 +294,8 @@ export default async function DynamicPlayerProfilePage({ params }) {
                     </p>
 
                     <p className="mt-2 text-sm leading-6 text-white/50">
-                      Scan this QR code to verify the DES player profile.
+                      Scan this QR code to verify the official DES player
+                      profile.
                     </p>
                   </div>
 
@@ -315,12 +333,13 @@ export default async function DynamicPlayerProfilePage({ params }) {
               </p>
 
               <h2 className="mt-3 text-4xl font-black md:text-5xl">
-                Approved through DES review.
+                Public and QR active.
               </h2>
 
               <p className="mt-5 text-white/65 leading-7">
                 This page is generated from a real Supabase player application
-                that has been approved and assigned a DES Player ID by admin.
+                that has been approved, assigned a DES Player ID, made public,
+                and activated for QR verification.
               </p>
             </div>
 
@@ -334,12 +353,12 @@ export default async function DynamicPlayerProfilePage({ params }) {
                 text="A unique player ID has been generated for this profile."
               />
               <FeatureRow
-                title="QR profile ready"
-                text="The profile can be connected to QR cards and event IDs."
+                title="Public profile"
+                text="DES has approved this profile to be visible publicly."
               />
               <FeatureRow
-                title="Future visibility control"
-                text="Later, DES can control public/private visibility and QR activation."
+                title="QR active"
+                text="The profile is active for DES QR verification."
               />
             </div>
           </div>
