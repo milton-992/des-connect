@@ -1,11 +1,14 @@
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
-import { updatePlayerApplicationStatus } from "./actions";
+import {
+  assignPlayerDesId,
+  updatePlayerApplicationStatus,
+} from "./actions";
 
 export default async function AdminPage() {
   const { data: playerApplications, error } = await supabaseAdmin
     .from("player_applications")
     .select(
-      "id, full_name, email, nationality, current_country, position, secondary_position, preferred_foot, current_club, playing_level, application_status, created_at, notes, admin_notes"
+      "id, full_name, email, nationality, current_country, position, secondary_position, preferred_foot, current_club, playing_level, application_status, created_at, notes, admin_notes, des_id, profile_slug, profile_visibility, qr_status, approved_at"
     )
     .order("created_at", { ascending: false });
 
@@ -26,6 +29,8 @@ export default async function AdminPage() {
   const onHoldPlayers = players.filter(
     (player) => player.application_status === "on_hold"
   );
+
+  const assignedDesIds = players.filter((player) => player.des_id);
 
   const overviewCards = [
     {
@@ -50,11 +55,11 @@ export default async function AdminPage() {
       text: "Players approved by DES admin.",
     },
     {
-      title: "Rejected / On Hold",
-      value: String(rejectedPlayers.length + onHoldPlayers.length),
-      status: "Controlled",
-      icon: "🛡️",
-      text: "Applications rejected or placed on hold.",
+      title: "DES IDs Assigned",
+      value: String(assignedDesIds.length),
+      status: "Profile Prep",
+      icon: "▦",
+      text: "Approved players prepared with DES ID and profile slug.",
     },
   ];
 
@@ -63,6 +68,11 @@ export default async function AdminPage() {
       title: "Approve Profiles",
       icon: "✅",
       text: "Mark player applications as approved after DES review.",
+    },
+    {
+      title: "Assign DES ID",
+      icon: "▦",
+      text: "Generate a DES player ID and private profile slug.",
     },
     {
       title: "Reject Applications",
@@ -80,14 +90,9 @@ export default async function AdminPage() {
       text: "Save internal review notes for each player application.",
     },
     {
-      title: "Future DES ID",
-      icon: "▦",
-      text: "Approved users can later receive a unique verified DES ID page.",
-    },
-    {
-      title: "Future Academy Link",
-      icon: "🎓",
-      text: "Scout and staff applications will later connect with DES Academy progress.",
+      title: "Future Public Profiles",
+      icon: "🌍",
+      text: "Approved players can later receive public QR profile pages.",
     },
   ];
 
@@ -136,28 +141,28 @@ export default async function AdminPage() {
         <div className="mb-10 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-green-500/30 bg-green-950/30 px-4 py-2 text-sm text-green-100">
-              🛡️ DES Super Admin · Status Actions Live
+              🛡️ DES Super Admin · DES ID Assignment Live
             </div>
 
             <h1 className="max-w-4xl text-5xl font-black leading-[0.95] tracking-tight md:text-7xl">
-              Review and control{" "}
-              <span className="text-yellow-400">applications.</span>
+              Review, approve and{" "}
+              <span className="text-yellow-400">prepare profiles.</span>
             </h1>
 
             <p className="mt-7 max-w-2xl text-lg leading-8 text-white/70">
-              This admin page now reads real player applications from Supabase
-              and can update their status to approved, rejected, on hold, or
-              pending.
+              This admin page now reads real player applications, updates their
+              review status, saves admin notes, and assigns DES Player IDs for
+              approved profile preparation.
             </p>
           </div>
 
           <div className="rounded-[2rem] border border-yellow-400/20 bg-yellow-400/10 p-5 lg:max-w-sm">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-yellow-400">
-              Important Security Note
+              Profile Preparation
             </p>
             <p className="mt-3 text-sm leading-6 text-white/70">
-              This page is still public visually. Later, Supabase Auth will
-              protect it so only Super Admin accounts can access these actions.
+              Assigning a DES ID prepares the player for a future verified DES
+              profile and QR page. The profile remains private until activated.
             </p>
           </div>
         </div>
@@ -209,7 +214,7 @@ export default async function AdminPage() {
                 Real Player Applications
               </p>
               <h2 className="mt-3 text-3xl font-black md:text-4xl">
-                Review, update, and save admin notes.
+                Review, update, assign DES ID.
               </h2>
             </div>
 
@@ -244,8 +249,22 @@ export default async function AdminPage() {
                 >
                   <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
                     <div className="flex-1">
-                      <div className="mb-3 inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-yellow-400">
-                        {formatStatus(player.application_status)}
+                      <div className="mb-3 flex flex-wrap gap-2">
+                        <span className="inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-yellow-400">
+                          {formatStatus(player.application_status)}
+                        </span>
+
+                        {player.des_id && (
+                          <span className="inline-flex rounded-full border border-green-500/25 bg-green-950/30 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-green-200">
+                            DES ID Assigned
+                          </span>
+                        )}
+
+                        {!player.des_id && (
+                          <span className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-white/45">
+                            No DES ID Yet
+                          </span>
+                        )}
                       </div>
 
                       <h3 className="text-2xl font-black">
@@ -295,6 +314,36 @@ export default async function AdminPage() {
                         />
                       </div>
 
+                      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <ApplicationInfo
+                          label="DES ID"
+                          value={player.des_id || "Not assigned"}
+                        />
+                        <ApplicationInfo
+                          label="Profile Slug"
+                          value={player.profile_slug || "Not assigned"}
+                        />
+                        <ApplicationInfo
+                          label="Visibility"
+                          value={player.profile_visibility || "private"}
+                        />
+                        <ApplicationInfo
+                          label="QR Status"
+                          value={player.qr_status || "inactive"}
+                        />
+                      </div>
+
+                      {player.approved_at && (
+                        <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-950/20 p-4">
+                          <p className="text-xs uppercase tracking-[0.18em] text-green-200">
+                            Approved At
+                          </p>
+                          <p className="mt-1 text-sm font-bold text-white/80">
+                            {new Date(player.approved_at).toLocaleString()}
+                          </p>
+                        </div>
+                      )}
+
                       {player.notes && (
                         <div className="mt-5 rounded-2xl border border-white/10 bg-black/35 p-4">
                           <p className="text-xs uppercase tracking-[0.18em] text-white/35">
@@ -318,66 +367,103 @@ export default async function AdminPage() {
                       )}
                     </div>
 
-                    <form
-                      action={updatePlayerApplicationStatus}
-                      className="w-full rounded-[1.5rem] border border-white/10 bg-black/35 p-5 xl:w-[320px]"
-                    >
-                      <input
-                        type="hidden"
-                        name="applicationId"
-                        value={player.id}
-                      />
+                    <div className="w-full xl:w-[340px]">
+                      <form
+                        action={updatePlayerApplicationStatus}
+                        className="rounded-[1.5rem] border border-white/10 bg-black/35 p-5"
+                      >
+                        <input
+                          type="hidden"
+                          name="applicationId"
+                          value={player.id}
+                        />
 
-                      <label className="mb-2 block text-sm font-bold text-white/80">
-                        Admin Notes
-                      </label>
+                        <label className="mb-2 block text-sm font-bold text-white/80">
+                          Admin Notes
+                        </label>
 
-                      <textarea
-                        name="adminNotes"
-                        defaultValue={player.admin_notes || ""}
-                        rows="5"
-                        placeholder="Example: Good winger, review full match video again..."
-                        className="w-full resize-none rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-sm text-white placeholder:text-white/30 outline-none focus:border-yellow-400"
-                      />
+                        <textarea
+                          name="adminNotes"
+                          defaultValue={player.admin_notes || ""}
+                          rows="5"
+                          placeholder="Example: Good winger, review full match video again..."
+                          className="w-full resize-none rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-sm text-white placeholder:text-white/30 outline-none focus:border-yellow-400"
+                        />
 
-                      <div className="mt-4 grid gap-3">
+                        <div className="mt-4 grid gap-3">
+                          <button
+                            type="submit"
+                            name="newStatus"
+                            value="approved"
+                            className="rounded-full bg-yellow-500 px-5 py-3 text-sm font-black text-black hover:bg-yellow-400"
+                          >
+                            Approve Player
+                          </button>
+
+                          <button
+                            type="submit"
+                            name="newStatus"
+                            value="on_hold"
+                            className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-5 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-400/20"
+                          >
+                            Put On Hold
+                          </button>
+
+                          <button
+                            type="submit"
+                            name="newStatus"
+                            value="rejected"
+                            className="rounded-full border border-red-500/30 bg-red-950/30 px-5 py-3 text-sm font-bold text-red-100 hover:bg-red-950/50"
+                          >
+                            Reject Player
+                          </button>
+
+                          <button
+                            type="submit"
+                            name="newStatus"
+                            value="pending"
+                            className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
+                          >
+                            Reset to Pending
+                          </button>
+                        </div>
+                      </form>
+
+                      <form
+                        action={assignPlayerDesId}
+                        className="mt-4 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/10 p-5"
+                      >
+                        <input
+                          type="hidden"
+                          name="applicationId"
+                          value={player.id}
+                        />
+
+                        <input
+                          type="hidden"
+                          name="adminNotes"
+                          value={player.admin_notes || ""}
+                        />
+
+                        <p className="font-black text-yellow-400">
+                          DES ID Assignment
+                        </p>
+
+                        <p className="mt-2 text-sm leading-6 text-white/70">
+                          Assigns a DES Player ID, profile slug, private
+                          visibility, and inactive QR status.
+                        </p>
+
                         <button
                           type="submit"
-                          name="newStatus"
-                          value="approved"
-                          className="rounded-full bg-yellow-500 px-5 py-3 text-sm font-black text-black hover:bg-yellow-400"
+                          className="mt-4 w-full rounded-full bg-yellow-500 px-5 py-3 text-sm font-black text-black hover:bg-yellow-400"
                         >
-                          Approve Player
+                          {player.des_id
+                            ? "Refresh DES ID Settings"
+                            : "Assign DES ID"}
                         </button>
-
-                        <button
-                          type="submit"
-                          name="newStatus"
-                          value="on_hold"
-                          className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-5 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-400/20"
-                        >
-                          Put On Hold
-                        </button>
-
-                        <button
-                          type="submit"
-                          name="newStatus"
-                          value="rejected"
-                          className="rounded-full border border-red-500/30 bg-red-950/30 px-5 py-3 text-sm font-bold text-red-100 hover:bg-red-950/50"
-                        >
-                          Reject Player
-                        </button>
-
-                        <button
-                          type="submit"
-                          name="newStatus"
-                          value="pending"
-                          className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
-                        >
-                          Reset to Pending
-                        </button>
-                      </div>
-                    </form>
+                      </form>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -399,8 +485,8 @@ export default async function AdminPage() {
           </div>
 
           <p className="max-w-xl text-white/60">
-            The admin area now reads and updates real applications. The next
-            step will be protected admin login and dynamic DES ID generation.
+            The admin area now reads and updates real applications, and can
+            prepare approved players for future DES ID profile pages.
           </p>
         </div>
 
@@ -433,13 +519,12 @@ export default async function AdminPage() {
               </p>
 
               <h2 className="mt-3 text-4xl font-black md:text-6xl">
-                Turn approved players into DES profiles.
+                Create real DES player profile pages.
               </h2>
 
               <p className="mt-5 max-w-2xl text-white/65 leading-7">
-                Now that status updates work, the next big step is to prepare
-                approved players for DES ID assignment and public profile
-                generation.
+                Now that DES IDs can be assigned, the next step is dynamic
+                profile pages like /id/player-0001 connected to Supabase.
               </p>
             </div>
 
@@ -451,6 +536,7 @@ export default async function AdminPage() {
                 <StatusRow label="Player Form" value="Saving Data" />
                 <StatusRow label="Admin Read" value="Live Data" />
                 <StatusRow label="Status Buttons" value="Live Actions" />
+                <StatusRow label="DES ID Assignment" value="Live Action" />
               </div>
 
               <a
@@ -477,7 +563,9 @@ function ApplicationInfo({ label, value }) {
       <p className="text-xs uppercase tracking-[0.18em] text-white/35">
         {label}
       </p>
-      <p className="mt-1 text-sm font-bold text-white/85">{value}</p>
+      <p className="mt-1 break-words text-sm font-bold text-white/85">
+        {value}
+      </p>
     </div>
   );
 }
