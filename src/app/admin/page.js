@@ -1,12 +1,19 @@
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 import {
   assignPlayerDesId,
+  assignScoutDesId,
   updatePlayerApplicationStatus,
   updatePlayerProfileControls,
   updateScoutApplicationStatus,
+  updateScoutProfileControls,
 } from "./actions";
 
 export default async function AdminPage() {
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(
+    /\/$/,
+    ""
+  );
+
   const { data: playerApplications, error: playerError } = await supabaseAdmin
     .from("player_applications")
     .select(
@@ -17,7 +24,7 @@ export default async function AdminPage() {
   const { data: scoutApplications, error: scoutError } = await supabaseAdmin
     .from("scout_applications")
     .select(
-      "id, full_name, email, phone, nationality, current_country, city, scouting_country, scouting_region, football_background, current_football_role, experience_level, languages, availability, has_transport, can_record_matches, understands_des_methodology, motivation, strengths, notes, application_status, admin_notes, created_at, approved_at"
+      "id, full_name, email, phone, nationality, current_country, city, scouting_country, scouting_region, football_background, current_football_role, experience_level, languages, availability, has_transport, can_record_matches, understands_des_methodology, motivation, strengths, notes, application_status, admin_notes, created_at, approved_at, des_scout_id, scout_profile_slug, profile_public, qr_active, academy_status, certificate_title, certificate_level, certificate_status, certificate_issue_date, certificate_expiry_date, certificate_url"
     )
     .order("created_at", { ascending: false });
 
@@ -32,15 +39,11 @@ export default async function AdminPage() {
     (scout) => scout.application_status === "pending"
   );
 
-  const publicProfiles = players.filter(
-    (player) => player.profile_visibility === "public"
-  );
-
-  const activeQrProfiles = players.filter(
-    (player) => player.qr_status === "active"
-  );
-
   const assignedDesIds = players.filter((player) => player.des_id);
+  const assignedScoutIds = scouts.filter((scout) => scout.des_scout_id);
+  const certifiedScouts = scouts.filter(
+    (scout) => scout.certificate_status === "issued"
+  );
 
   const overviewCards = [
     {
@@ -65,11 +68,11 @@ export default async function AdminPage() {
       text: "Players and scouts waiting for DES admin review.",
     },
     {
-      title: "Public / QR Active",
-      value: `${publicProfiles.length}/${activeQrProfiles.length}`,
+      title: "IDs / Certificates",
+      value: `${assignedDesIds.length + assignedScoutIds.length}/${certifiedScouts.length}`,
       status: "Controlled",
-      icon: "🌍",
-      text: "Public profiles and active QR profiles controlled by admin.",
+      icon: "🎓",
+      text: "Assigned DES IDs and issued DES Academy scout certificates.",
     },
   ];
 
@@ -85,24 +88,24 @@ export default async function AdminPage() {
       text: "Review scout applications, approve scouts, reject scouts, or place them on hold.",
     },
     {
-      title: "Assign DES ID",
+      title: "Assign DES IDs",
       icon: "▦",
-      text: "Generate a DES player ID and private profile slug.",
+      text: "Generate DES player IDs and DES-SCOUT IDs from the admin panel.",
     },
     {
       title: "Profile Visibility",
       icon: "🌍",
-      text: "Control whether a player profile is private or public.",
+      text: "Control whether a player or scout profile is private/public.",
     },
     {
       title: "QR Activation",
       icon: "📱",
-      text: "Control whether the QR profile is inactive or active.",
+      text: "Control whether DES QR profiles are inactive or active.",
     },
     {
-      title: "Future Security",
-      icon: "🛡️",
-      text: "Later, admin access can be upgraded to Supabase Auth and role-based permissions.",
+      title: "DES Academy Certificates",
+      icon: "🎓",
+      text: "Connect approved scouts with DES Academy status, certificate level, and certificate URL.",
     },
   ];
 
@@ -160,9 +163,10 @@ export default async function AdminPage() {
             </h1>
 
             <p className="mt-7 max-w-2xl text-lg leading-8 text-white/70">
-              This admin area now reads real player applications and real scout
-              applications from Supabase. Player profiles can be approved,
-              assigned DES IDs, made public, and activated for QR verification.
+              This admin area reads real player applications and real scout
+              applications from Supabase. Players and scouts can now be
+              reviewed, approved, assigned DES IDs, and prepared for QR/profile
+              verification.
             </p>
           </div>
 
@@ -171,7 +175,7 @@ export default async function AdminPage() {
               Protected Admin
             </p>
             <p className="mt-3 text-sm leading-6 text-white/70">
-              Admin is now password protected. Later, this can be upgraded to
+              Admin is password protected. Later, this can be upgraded to
               Supabase Auth with role-based access for DES leadership.
             </p>
           </div>
@@ -241,22 +245,12 @@ export default async function AdminPage() {
           </div>
 
           {players.length === 0 ? (
-            <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6">
-              <p className="text-xl font-black text-white">
-                No player applications yet.
-              </p>
-              <p className="mt-2 text-sm leading-6 text-white/60">
-                Submit a test application from /register/player and it should
-                appear here.
-              </p>
-
-              <a
-                href="/register/player"
-                className="mt-6 inline-flex rounded-full bg-yellow-500 px-6 py-3 font-black text-black hover:bg-yellow-400"
-              >
-                Open Player Form →
-              </a>
-            </div>
+            <EmptyBox
+              title="No player applications yet."
+              text="Submit a test application from /register/player and it should appear here."
+              href="/register/player"
+              button="Open Player Form →"
+            />
           ) : (
             <div className="grid gap-5">
               {players.map((player) => (
@@ -267,40 +261,26 @@ export default async function AdminPage() {
                   <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
                     <div className="flex-1">
                       <div className="mb-3 flex flex-wrap gap-2">
-                        <span className="inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-yellow-400">
-                          {formatStatus(player.application_status)}
-                        </span>
-
-                        {player.des_id && (
-                          <span className="inline-flex rounded-full border border-green-500/25 bg-green-950/30 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-green-200">
-                            DES ID Assigned
-                          </span>
-                        )}
-
-                        <span
-                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ${
+                        <Badge text={formatStatus(player.application_status)} />
+                        {player.des_id && <Badge text="DES ID Assigned" green />}
+                        <Badge
+                          text={
                             player.profile_visibility === "public"
-                              ? "border-green-500/25 bg-green-950/30 text-green-200"
-                              : "border-white/10 bg-white/[0.04] text-white/45"
-                          }`}
-                        >
-                          {player.profile_visibility === "public"
-                            ? "Public"
-                            : "Private"}
-                        </span>
-
-                        <span
-                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ${
+                              ? "Public"
+                              : "Private"
+                          }
+                          green={player.profile_visibility === "public"}
+                          muted={player.profile_visibility !== "public"}
+                        />
+                        <Badge
+                          text={
                             player.qr_status === "active"
-                              ? "border-green-500/25 bg-green-950/30 text-green-200"
-                              : "border-white/10 bg-white/[0.04] text-white/45"
-                          }`}
-                        >
-                          QR{" "}
-                          {player.qr_status === "active"
-                            ? "Active"
-                            : "Inactive"}
-                        </span>
+                              ? "QR Active"
+                              : "QR Inactive"
+                          }
+                          green={player.qr_status === "active"}
+                          muted={player.qr_status !== "active"}
+                        />
                       </div>
 
                       <h3 className="text-2xl font-black">
@@ -389,36 +369,22 @@ export default async function AdminPage() {
                       )}
 
                       {player.approved_at && (
-                        <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-950/20 p-4">
-                          <p className="text-xs uppercase tracking-[0.18em] text-green-200">
-                            Approved At
-                          </p>
-                          <p className="mt-1 text-sm font-bold text-white/80">
-                            {new Date(player.approved_at).toLocaleString()}
-                          </p>
-                        </div>
+                        <ApprovedBox date={player.approved_at} />
                       )}
 
                       {player.notes && (
-                        <div className="mt-5 rounded-2xl border border-white/10 bg-black/35 p-4">
-                          <p className="text-xs uppercase tracking-[0.18em] text-white/35">
-                            Player Notes / Bio / Extra Info
-                          </p>
-                          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/65">
-                            {player.notes}
-                          </p>
-                        </div>
+                        <TextBox
+                          title="Player Notes / Bio / Extra Info"
+                          text={player.notes}
+                        />
                       )}
 
                       {player.admin_notes && (
-                        <div className="mt-5 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
-                          <p className="text-xs uppercase tracking-[0.18em] text-yellow-400">
-                            Current Admin Notes
-                          </p>
-                          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/75">
-                            {player.admin_notes}
-                          </p>
-                        </div>
+                        <TextBox
+                          title="Current Admin Notes"
+                          text={player.admin_notes}
+                          yellow
+                        />
                       )}
                     </div>
 
@@ -446,41 +412,10 @@ export default async function AdminPage() {
                         />
 
                         <div className="mt-4 grid gap-3">
-                          <button
-                            type="submit"
-                            name="newStatus"
-                            value="approved"
-                            className="rounded-full bg-yellow-500 px-5 py-3 text-sm font-black text-black hover:bg-yellow-400"
-                          >
-                            Approve Player
-                          </button>
-
-                          <button
-                            type="submit"
-                            name="newStatus"
-                            value="on_hold"
-                            className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-5 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-400/20"
-                          >
-                            Put On Hold
-                          </button>
-
-                          <button
-                            type="submit"
-                            name="newStatus"
-                            value="rejected"
-                            className="rounded-full border border-red-500/30 bg-red-950/30 px-5 py-3 text-sm font-bold text-red-100 hover:bg-red-950/50"
-                          >
-                            Reject Player
-                          </button>
-
-                          <button
-                            type="submit"
-                            name="newStatus"
-                            value="pending"
-                            className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
-                          >
-                            Reset to Pending
-                          </button>
+                          <StatusButton value="approved" text="Approve Player" />
+                          <StatusButton value="on_hold" text="Put On Hold" hold />
+                          <StatusButton value="rejected" text="Reject Player" reject />
+                          <StatusButton value="pending" text="Reset to Pending" reset />
                         </div>
                       </form>
 
@@ -540,11 +475,6 @@ export default async function AdminPage() {
                             Profile Controls
                           </p>
 
-                          <p className="mt-2 text-sm leading-6 text-white/70">
-                            Control whether this profile can be shared publicly
-                            and whether the QR is active.
-                          </p>
-
                           <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
                             Visibility
                           </label>
@@ -579,15 +509,6 @@ export default async function AdminPage() {
                           </button>
                         </form>
                       )}
-
-                      {player.des_id && player.profile_slug && (
-                        <a
-                          href={`/id/${player.profile_slug}`}
-                          className="mt-4 block rounded-full border border-green-500/30 bg-green-950/30 px-5 py-3 text-center text-sm font-black text-green-100 hover:bg-green-950/50"
-                        >
-                          View DES Profile →
-                        </a>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -605,7 +526,7 @@ export default async function AdminPage() {
                 Scout Applications
               </p>
               <h2 className="mt-3 text-3xl font-black md:text-4xl">
-                Real DES scout applications.
+                Review, assign DES-SCOUT IDs and connect Academy certificates.
               </h2>
             </div>
 
@@ -615,238 +536,502 @@ export default async function AdminPage() {
           </div>
 
           {scouts.length === 0 ? (
-            <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6">
-              <p className="text-xl font-black text-white">
-                No scout applications yet.
-              </p>
-              <p className="mt-2 text-sm leading-6 text-white/60">
-                Submit a test scout application from /register/scout and it
-                should appear here.
-              </p>
-
-              <a
-                href="/register/scout"
-                className="mt-6 inline-flex rounded-full bg-yellow-500 px-6 py-3 font-black text-black hover:bg-yellow-400"
-              >
-                Open Scout Form →
-              </a>
-            </div>
+            <EmptyBox
+              title="No scout applications yet."
+              text="Submit a test scout application from /register/scout and it should appear here."
+              href="/register/scout"
+              button="Open Scout Form →"
+            />
           ) : (
             <div className="grid gap-5">
-              {scouts.map((scout) => (
-                <div
-                  key={scout.id}
-                  className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5"
-                >
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    <span className="inline-flex rounded-full border border-yellow-400/25 bg-yellow-400/10 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-yellow-400">
-                      {formatStatus(scout.application_status)}
-                    </span>
+              {scouts.map((scout) => {
+                const scoutProfilePath = scout.scout_profile_slug
+                  ? `/id/${scout.scout_profile_slug}`
+                  : "";
+                const scoutProfileUrl = scout.scout_profile_slug
+                  ? `${siteUrl}${scoutProfilePath}`
+                  : "";
+                const scoutQrUrl = scoutProfileUrl
+                  ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+                      scoutProfileUrl
+                    )}`
+                  : "";
 
-                    <span className="inline-flex rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-white/45">
-                      Scout Applicant
-                    </span>
-                  </div>
+                return (
+                  <div
+                    key={scout.id}
+                    className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5"
+                  >
+                    <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+                      <div className="flex-1">
+                        <div className="mb-3 flex flex-wrap gap-2">
+                          <Badge text={formatStatus(scout.application_status)} />
 
-                  <h3 className="text-2xl font-black">{scout.full_name}</h3>
+                          <Badge text="Scout Applicant" muted />
 
-                  <p className="mt-2 text-sm text-white/55">{scout.email}</p>
+                          {scout.des_scout_id && (
+                            <Badge text="DES-SCOUT ID Assigned" green />
+                          )}
 
-                  <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    <ApplicationInfo
-                      label="Nationality"
-                      value={scout.nationality || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Country"
-                      value={scout.current_country || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="City"
-                      value={scout.city || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Phone"
-                      value={scout.phone || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Scouting Market"
-                      value={scout.scouting_country || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Scouting Region"
-                      value={scout.scouting_region || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Experience"
-                      value={scout.experience_level || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Football Background"
-                      value={scout.football_background || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Current Role"
-                      value={scout.current_football_role || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Languages"
-                      value={scout.languages || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Availability"
-                      value={scout.availability || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Submitted"
-                      value={
-                        scout.created_at
-                          ? new Date(scout.created_at).toLocaleDateString()
-                          : "Not provided"
-                      }
-                    />
-                  </div>
+                          <Badge
+                            text={scout.profile_public ? "Public" : "Private"}
+                            green={scout.profile_public}
+                            muted={!scout.profile_public}
+                          />
 
-                  <div className="mt-4 grid gap-3 md:grid-cols-3">
-                    <ApplicationInfo
-                      label="Transport"
-                      value={scout.has_transport || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="Can Record Matches"
-                      value={scout.can_record_matches || "Not provided"}
-                    />
-                    <ApplicationInfo
-                      label="DES Methodology"
-                      value={scout.understands_des_methodology || "Not provided"}
-                    />
-                  </div>
+                          <Badge
+                            text={scout.qr_active ? "QR Active" : "QR Inactive"}
+                            green={scout.qr_active}
+                            muted={!scout.qr_active}
+                          />
 
-                  {scout.motivation && (
-                    <div className="mt-5 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-yellow-400">
-                        Motivation
-                      </p>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/75">
-                        {scout.motivation}
-                      </p>
-                    </div>
-                  )}
+                          <Badge
+                            text={`Certificate: ${formatCertificateStatus(
+                              scout.certificate_status
+                            )}`}
+                            green={scout.certificate_status === "issued"}
+                          />
+                        </div>
 
-                  {scout.strengths && (
-                    <div className="mt-5 rounded-2xl border border-white/10 bg-black/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-white/35">
-                        Player Type / Strengths
-                      </p>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/65">
-                        {scout.strengths}
-                      </p>
-                    </div>
-                  )}
+                        <h3 className="text-2xl font-black">
+                          {scout.full_name}
+                        </h3>
 
-                  {scout.notes && (
-                    <div className="mt-5 rounded-2xl border border-white/10 bg-black/35 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-white/35">
-                        Extra Scout Notes
-                      </p>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/65">
-                        {scout.notes}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="mt-5 rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/10 p-5">
-                    <p className="font-black text-yellow-400">
-                      Scout Admin Review
-                    </p>
-
-                    <p className="mt-2 text-sm leading-6 text-white/70">
-                      Review this scout application, save internal notes, and
-                      update the application status.
-                    </p>
-
-                    {scout.admin_notes && (
-                      <div className="mt-4 rounded-2xl border border-white/10 bg-black/35 p-4">
-                        <p className="text-xs uppercase tracking-[0.18em] text-white/35">
-                          Current Admin Notes
+                        <p className="mt-2 text-sm text-white/55">
+                          {scout.email}
                         </p>
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/70">
-                          {scout.admin_notes}
-                        </p>
+
+                        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                          <ApplicationInfo
+                            label="Nationality"
+                            value={scout.nationality || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Country"
+                            value={scout.current_country || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="City"
+                            value={scout.city || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Phone"
+                            value={scout.phone || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Scouting Market"
+                            value={scout.scouting_country || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Scouting Region"
+                            value={scout.scouting_region || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Experience"
+                            value={scout.experience_level || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Football Background"
+                            value={scout.football_background || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Current Role"
+                            value={scout.current_football_role || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Languages"
+                            value={scout.languages || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Availability"
+                            value={scout.availability || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Submitted"
+                            value={
+                              scout.created_at
+                                ? new Date(scout.created_at).toLocaleDateString()
+                                : "Not provided"
+                            }
+                          />
+                        </div>
+
+                        <div className="mt-4 grid gap-3 md:grid-cols-3">
+                          <ApplicationInfo
+                            label="Transport"
+                            value={scout.has_transport || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="Can Record Matches"
+                            value={scout.can_record_matches || "Not provided"}
+                          />
+                          <ApplicationInfo
+                            label="DES Methodology"
+                            value={
+                              scout.understands_des_methodology || "Not provided"
+                            }
+                          />
+                        </div>
+
+                        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                          <ApplicationInfo
+                            label="DES-SCOUT ID"
+                            value={scout.des_scout_id || "Not assigned"}
+                          />
+                          <ApplicationInfo
+                            label="Scout Slug"
+                            value={scout.scout_profile_slug || "Not assigned"}
+                          />
+                          <ApplicationInfo
+                            label="Profile"
+                            value={scout.profile_public ? "Public" : "Private"}
+                          />
+                          <ApplicationInfo
+                            label="QR"
+                            value={scout.qr_active ? "Active" : "Inactive"}
+                          />
+                          <ApplicationInfo
+                            label="Academy Status"
+                            value={formatAcademyStatus(scout.academy_status)}
+                          />
+                          <ApplicationInfo
+                            label="Certificate Title"
+                            value={scout.certificate_title || "Not issued"}
+                          />
+                          <ApplicationInfo
+                            label="Certificate Level"
+                            value={scout.certificate_level || "Not set"}
+                          />
+                          <ApplicationInfo
+                            label="Certificate Status"
+                            value={formatCertificateStatus(
+                              scout.certificate_status
+                            )}
+                          />
+                        </div>
+
+                        {scoutProfileUrl && (
+                          <div className="mt-5 grid gap-5 rounded-2xl border border-green-500/20 bg-green-950/20 p-5 lg:grid-cols-[1fr_260px] lg:items-center">
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.18em] text-green-200">
+                                Scout QR Verification Link
+                              </p>
+
+                              <p className="mt-2 break-all text-sm font-bold text-white/80">
+                                {scoutProfileUrl}
+                              </p>
+
+                              {!scout.qr_active && (
+                                <p className="mt-3 rounded-2xl border border-yellow-400/20 bg-yellow-400/10 p-3 text-sm font-bold text-yellow-200">
+                                  QR code is created, but status is currently
+                                  inactive. Change QR Status to Active when you
+                                  want this scout QR to be usable officially.
+                                </p>
+                              )}
+
+                              <a
+                                href={scoutProfilePath}
+                                className="mt-4 inline-flex rounded-full bg-yellow-500 px-6 py-3 text-sm font-black text-black hover:bg-yellow-400"
+                              >
+                                Open Scout Profile →
+                              </a>
+                            </div>
+
+                            <div className="rounded-[1.5rem] border border-white/10 bg-white p-4">
+                              <img
+                                src={scoutQrUrl}
+                                alt={`${scout.des_scout_id || "Scout"} QR code`}
+                                className="mx-auto h-56 w-56 object-contain"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {scout.certificate_url && (
+                          <div className="mt-5 rounded-2xl border border-green-500/20 bg-green-950/20 p-4">
+                            <p className="text-xs uppercase tracking-[0.18em] text-green-200">
+                              DES Academy Certificate Link
+                            </p>
+
+                            <p className="mt-2 break-all text-sm font-bold text-white/80">
+                              {scout.certificate_url}
+                            </p>
+
+                            <a
+                              href={scout.certificate_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-4 inline-flex rounded-full bg-yellow-500 px-6 py-3 text-sm font-black text-black hover:bg-yellow-400"
+                            >
+                              Open Certificate →
+                            </a>
+                          </div>
+                        )}
+
+                        {scout.motivation && (
+                          <TextBox
+                            title="Motivation"
+                            text={scout.motivation}
+                            yellow
+                          />
+                        )}
+
+                        {scout.strengths && (
+                          <TextBox
+                            title="Player Type / Strengths"
+                            text={scout.strengths}
+                          />
+                        )}
+
+                        {scout.notes && (
+                          <TextBox title="Extra Scout Notes" text={scout.notes} />
+                        )}
+
+                        {scout.admin_notes && (
+                          <TextBox
+                            title="Current Admin Notes"
+                            text={scout.admin_notes}
+                            yellow
+                          />
+                        )}
+
+                        {scout.approved_at && (
+                          <ApprovedBox date={scout.approved_at} />
+                        )}
                       </div>
-                    )}
 
-                    {scout.approved_at && (
-                      <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-950/20 p-4">
-                        <p className="text-xs uppercase tracking-[0.18em] text-green-200">
-                          Approved At
-                        </p>
-                        <p className="mt-1 text-sm font-bold text-white/80">
-                          {new Date(scout.approved_at).toLocaleString()}
-                        </p>
+                      <div className="w-full xl:w-[380px]">
+                        <form
+                          action={updateScoutApplicationStatus}
+                          className="rounded-[1.5rem] border border-yellow-400/20 bg-yellow-400/10 p-5"
+                        >
+                          <input
+                            type="hidden"
+                            name="applicationId"
+                            value={scout.id}
+                          />
+
+                          <p className="font-black text-yellow-400">
+                            Scout Admin Review
+                          </p>
+
+                          <p className="mt-2 text-sm leading-6 text-white/70">
+                            Review this scout application, save internal notes,
+                            and update the application status.
+                          </p>
+
+                          <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                            Scout Admin Notes
+                          </label>
+
+                          <textarea
+                            name="adminNotes"
+                            defaultValue={scout.admin_notes || ""}
+                            rows="4"
+                            placeholder="Example: Good local knowledge, should complete DES Academy before approval..."
+                            className="w-full resize-none rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-sm text-white placeholder:text-white/30 outline-none focus:border-yellow-400"
+                          />
+
+                          <div className="mt-4 grid gap-3">
+                            <StatusButton value="approved" text="Approve Scout" />
+                            <StatusButton value="on_hold" text="Put On Hold" hold />
+                            <StatusButton value="rejected" text="Reject Scout" reject />
+                            <StatusButton value="pending" text="Reset Pending" reset />
+                          </div>
+                        </form>
+
+                        <form
+                          action={assignScoutDesId}
+                          className="mt-4 rounded-[1.5rem] border border-green-500/20 bg-green-950/20 p-5"
+                        >
+                          <input
+                            type="hidden"
+                            name="applicationId"
+                            value={scout.id}
+                          />
+
+                          <input
+                            type="hidden"
+                            name="adminNotes"
+                            value={scout.admin_notes || ""}
+                          />
+
+                          <p className="font-black text-green-200">
+                            DES-SCOUT ID Assignment
+                          </p>
+
+                          <p className="mt-2 text-sm leading-6 text-white/70">
+                            Assigns a DES-SCOUT ID and prepares the scout for DES
+                            Academy, QR and certificate controls.
+                          </p>
+
+                          <button
+                            type="submit"
+                            className="mt-4 w-full rounded-full bg-green-500 px-5 py-3 text-sm font-black text-black hover:bg-green-400"
+                          >
+                            {scout.des_scout_id
+                              ? "Refresh DES-SCOUT Settings"
+                              : "Assign DES-SCOUT ID"}
+                          </button>
+                        </form>
+
+                        {scout.des_scout_id && (
+                          <form
+                            action={updateScoutProfileControls}
+                            className="mt-4 rounded-[1.5rem] border border-white/10 bg-black/35 p-5"
+                          >
+                            <input
+                              type="hidden"
+                              name="applicationId"
+                              value={scout.id}
+                            />
+
+                            <input
+                              type="hidden"
+                              name="scoutProfileSlug"
+                              value={scout.scout_profile_slug || ""}
+                            />
+
+                            <p className="font-black text-white">
+                              Academy / Certificate Controls
+                            </p>
+
+                            <p className="mt-2 text-sm leading-6 text-white/70">
+                              Control scout profile visibility, QR status,
+                              Academy progress and certificate connection.
+                            </p>
+
+                            <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                              Scout Profile Visibility
+                            </label>
+
+                            <select
+                              name="profilePublic"
+                              defaultValue={
+                                scout.profile_public ? "true" : "false"
+                              }
+                              className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none focus:border-yellow-400"
+                            >
+                              <option value="false">Private</option>
+                              <option value="true">Public</option>
+                            </select>
+
+                            <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                              QR Status
+                            </label>
+
+                            <select
+                              name="qrActive"
+                              defaultValue={scout.qr_active ? "true" : "false"}
+                              className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none focus:border-yellow-400"
+                            >
+                              <option value="false">Inactive</option>
+                              <option value="true">Active</option>
+                            </select>
+
+                            <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                              Academy Status
+                            </label>
+
+                            <select
+                              name="academyStatus"
+                              defaultValue={
+                                scout.academy_status || "not_started"
+                              }
+                              className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none focus:border-yellow-400"
+                            >
+                              <option value="not_started">Not Started</option>
+                              <option value="in_progress">In Progress</option>
+                              <option value="passed">Passed</option>
+                              <option value="failed">Failed</option>
+                              <option value="certified">Certified</option>
+                            </select>
+
+                            <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                              Certificate Title
+                            </label>
+
+                            <input
+                              name="certificateTitle"
+                              defaultValue={scout.certificate_title || ""}
+                              placeholder="DES Scouting Methodology Certificate"
+                              className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white placeholder:text-white/30 outline-none focus:border-yellow-400"
+                            />
+
+                            <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                              Certificate Level
+                            </label>
+
+                            <input
+                              name="certificateLevel"
+                              defaultValue={scout.certificate_level || ""}
+                              placeholder="Level 1 / Foundation / Advanced"
+                              className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white placeholder:text-white/30 outline-none focus:border-yellow-400"
+                            />
+
+                            <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                              Certificate Status
+                            </label>
+
+                            <select
+                              name="certificateStatus"
+                              defaultValue={
+                                scout.certificate_status || "not_issued"
+                              }
+                              className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none focus:border-yellow-400"
+                            >
+                              <option value="not_issued">Not Issued</option>
+                              <option value="issued">Issued</option>
+                              <option value="expired">Expired</option>
+                              <option value="revoked">Revoked</option>
+                            </select>
+
+                            <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                              Issue Date
+                            </label>
+
+                            <input
+                              type="date"
+                              name="certificateIssueDate"
+                              defaultValue={scout.certificate_issue_date || ""}
+                              className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none focus:border-yellow-400"
+                            />
+
+                            <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                              Expiry Date
+                            </label>
+
+                            <input
+                              type="date"
+                              name="certificateExpiryDate"
+                              defaultValue={scout.certificate_expiry_date || ""}
+                              className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white outline-none focus:border-yellow-400"
+                            />
+
+                            <label className="mt-4 mb-2 block text-sm font-bold text-white/80">
+                              Certificate URL
+                            </label>
+
+                            <input
+                              name="certificateUrl"
+                              defaultValue={scout.certificate_url || ""}
+                              placeholder="/academy/certificates/des-scout-0001 or external PDF link"
+                              className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-white placeholder:text-white/30 outline-none focus:border-yellow-400"
+                            />
+
+                            <button
+                              type="submit"
+                              className="mt-5 w-full rounded-full bg-yellow-500 px-5 py-3 text-sm font-black text-black hover:bg-yellow-400"
+                            >
+                              Save Academy / Certificate Controls
+                            </button>
+                          </form>
+                        )}
                       </div>
-                    )}
-
-                    <form action={updateScoutApplicationStatus} className="mt-5">
-                      <input
-                        type="hidden"
-                        name="applicationId"
-                        value={scout.id}
-                      />
-
-                      <label className="mb-2 block text-sm font-bold text-white/80">
-                        Scout Admin Notes
-                      </label>
-
-                      <textarea
-                        name="adminNotes"
-                        defaultValue={scout.admin_notes || ""}
-                        rows="4"
-                        placeholder="Example: Good local knowledge, should complete DES Academy before approval..."
-                        className="w-full resize-none rounded-2xl border border-white/10 bg-black/50 px-4 py-4 text-sm text-white placeholder:text-white/30 outline-none focus:border-yellow-400"
-                      />
-
-                      <div className="mt-4 grid gap-3 md:grid-cols-4">
-                        <button
-                          type="submit"
-                          name="newStatus"
-                          value="approved"
-                          className="rounded-full bg-yellow-500 px-5 py-3 text-sm font-black text-black hover:bg-yellow-400"
-                        >
-                          Approve Scout
-                        </button>
-
-                        <button
-                          type="submit"
-                          name="newStatus"
-                          value="on_hold"
-                          className="rounded-full border border-yellow-400/25 bg-yellow-400/10 px-5 py-3 text-sm font-bold text-yellow-300 hover:bg-yellow-400/20"
-                        >
-                          Put On Hold
-                        </button>
-
-                        <button
-                          type="submit"
-                          name="newStatus"
-                          value="rejected"
-                          className="rounded-full border border-red-500/30 bg-red-950/30 px-5 py-3 text-sm font-bold text-red-100 hover:bg-red-950/50"
-                        >
-                          Reject Scout
-                        </button>
-
-                        <button
-                          type="submit"
-                          name="newStatus"
-                          value="pending"
-                          className="rounded-full border border-white/15 bg-white/5 px-5 py-3 text-sm font-bold text-white hover:bg-white/10"
-                        >
-                          Reset Pending
-                        </button>
-                      </div>
-                    </form>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -866,8 +1051,8 @@ export default async function AdminPage() {
 
           <p className="max-w-xl text-white/60">
             The admin area now reads player applications and scout applications.
-            Players have full DES ID and QR workflow; scouts are now visible and
-            have approval controls.
+            Players have full DES ID and QR workflow; scouts now have DES-SCOUT
+            ID assignment, QR generation and Academy certificate controls.
           </p>
         </div>
 
@@ -900,13 +1085,13 @@ export default async function AdminPage() {
               </p>
 
               <h2 className="mt-3 text-4xl font-black md:text-6xl">
-                Add DES Scout ID assignment.
+                Build public scout verification pages.
               </h2>
 
               <p className="mt-5 max-w-2xl text-white/65 leading-7">
-                Scout approval controls are now ready. The next step is to add
-                DES-SCOUT ID assignment and connect scout approval with DES
-                Academy and certificates.
+                Scout QR codes are now generated in admin. The next step is to
+                make /id/scout-0001 show a real public scout verification page,
+                similar to the player DES profile.
               </p>
             </div>
 
@@ -918,7 +1103,7 @@ export default async function AdminPage() {
                 <StatusRow label="Scout Form" value="Saving Data" />
                 <StatusRow label="Admin Login" value="Protected" />
                 <StatusRow label="Player Admin" value="Full Workflow" />
-                <StatusRow label="Scout Admin" value="Approval Controls" />
+                <StatusRow label="Scout Admin" value="DES-SCOUT + QR" />
               </div>
 
               <a
@@ -939,6 +1124,59 @@ export default async function AdminPage() {
   );
 }
 
+function EmptyBox({ title, text, href, button }) {
+  return (
+    <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6">
+      <p className="text-xl font-black text-white">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-white/60">{text}</p>
+
+      <a
+        href={href}
+        className="mt-6 inline-flex rounded-full bg-yellow-500 px-6 py-3 font-black text-black hover:bg-yellow-400"
+      >
+        {button}
+      </a>
+    </div>
+  );
+}
+
+function Badge({ text, green = false, muted = false }) {
+  return (
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.16em] ${
+        green
+          ? "border-green-500/25 bg-green-950/30 text-green-200"
+          : muted
+            ? "border-white/10 bg-white/[0.04] text-white/45"
+            : "border-yellow-400/25 bg-yellow-400/10 text-yellow-400"
+      }`}
+    >
+      {text}
+    </span>
+  );
+}
+
+function StatusButton({ value, text, hold = false, reject = false, reset = false }) {
+  return (
+    <button
+      type="submit"
+      name="newStatus"
+      value={value}
+      className={`rounded-full px-5 py-3 text-sm font-black ${
+        reject
+          ? "border border-red-500/30 bg-red-950/30 text-red-100 hover:bg-red-950/50"
+          : hold
+            ? "border border-yellow-400/25 bg-yellow-400/10 text-yellow-300 hover:bg-yellow-400/20"
+            : reset
+              ? "border border-white/15 bg-white/5 text-white hover:bg-white/10"
+              : "bg-yellow-500 text-black hover:bg-yellow-400"
+      }`}
+    >
+      {text}
+    </button>
+  );
+}
+
 function ApplicationInfo({ label, value }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/35 p-3">
@@ -947,6 +1185,42 @@ function ApplicationInfo({ label, value }) {
       </p>
       <p className="mt-1 break-words text-sm font-bold text-white/85">
         {value}
+      </p>
+    </div>
+  );
+}
+
+function TextBox({ title, text, yellow = false }) {
+  return (
+    <div
+      className={`mt-5 rounded-2xl border p-4 ${
+        yellow
+          ? "border-yellow-400/20 bg-yellow-400/10"
+          : "border-white/10 bg-black/35"
+      }`}
+    >
+      <p
+        className={`text-xs uppercase tracking-[0.18em] ${
+          yellow ? "text-yellow-400" : "text-white/35"
+        }`}
+      >
+        {title}
+      </p>
+      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/70">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function ApprovedBox({ date }) {
+  return (
+    <div className="mt-4 rounded-2xl border border-green-500/20 bg-green-950/20 p-4">
+      <p className="text-xs uppercase tracking-[0.18em] text-green-200">
+        Approved At
+      </p>
+      <p className="mt-1 text-sm font-bold text-white/80">
+        {new Date(date).toLocaleString()}
       </p>
     </div>
   );
@@ -968,4 +1242,19 @@ function formatStatus(status) {
   if (status === "rejected") return "Rejected";
   if (status === "on_hold") return "On Hold";
   return "Pending";
+}
+
+function formatAcademyStatus(status) {
+  if (status === "in_progress") return "In Progress";
+  if (status === "passed") return "Passed";
+  if (status === "failed") return "Failed";
+  if (status === "certified") return "Certified";
+  return "Not Started";
+}
+
+function formatCertificateStatus(status) {
+  if (status === "issued") return "Issued";
+  if (status === "expired") return "Expired";
+  if (status === "revoked") return "Revoked";
+  return "Not Issued";
 }
