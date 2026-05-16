@@ -56,6 +56,53 @@ export async function updatePlayerApplicationStatus(formData) {
   }
 }
 
+export async function updateScoutApplicationStatus(formData) {
+  const applicationId = formData.get("applicationId");
+  const newStatus = formData.get("newStatus");
+  const adminNotes = formData.get("adminNotes");
+
+  if (!applicationId) {
+    throw new Error("Missing scout application ID.");
+  }
+
+  if (!newStatus) {
+    throw new Error("Missing scout application status.");
+  }
+
+  const allowedStatuses = ["pending", "approved", "rejected", "on_hold"];
+
+  if (!allowedStatuses.includes(newStatus)) {
+    throw new Error("Invalid scout application status.");
+  }
+
+  const updatePayload = {
+    application_status: newStatus,
+  };
+
+  if (newStatus === "approved") {
+    updatePayload.approved_at = new Date().toISOString();
+  }
+
+  if (newStatus !== "approved") {
+    updatePayload.approved_at = null;
+  }
+
+  if (typeof adminNotes === "string") {
+    updatePayload.admin_notes = adminNotes.trim() || null;
+  }
+
+  const { error } = await supabaseAdmin
+    .from("scout_applications")
+    .update(updatePayload)
+    .eq("id", applicationId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/admin");
+}
+
 export async function assignPlayerDesId(formData) {
   const applicationId = formData.get("applicationId");
   const adminNotes = formData.get("adminNotes");
@@ -78,8 +125,6 @@ export async function assignPlayerDesId(formData) {
     throw new Error("Player application not found.");
   }
 
-  // If the player already has a DES ID, do not reset visibility or QR status.
-  // Only save admin notes and refresh the admin/profile pages.
   if (currentApplication.des_id) {
     const updatePayload = {};
 
